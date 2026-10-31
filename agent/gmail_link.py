@@ -110,6 +110,12 @@ def access(owner,connect,pg):
 def ident(value):
     if not isinstance(value,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,256}',value):raise ws.APIError(400,'Invalid Gmail message identifier.')
     return value
+def attachment_reference(value):
+    # Google attachment references are opaque and can be much longer than message IDs.
+    # Encode the entire value as one path segment; never concatenate raw provider data.
+    if not isinstance(value,str) or not 1<=len(value)<=8192 or any(ord(c)<33 or ord(c)==127 for c in value):
+        raise ws.APIError(400,'Invalid or oversized Gmail attachment reference. Select the attachment again.')
+    return urllib.parse.quote(value,safe='')
 def search(data,owner,connect,pg):
     query=data.get('query',DEFAULT_QUERY)
     if not isinstance(query,str) or not 1<=len(query)<=300:raise ws.APIError(400,'Use a search query up to 300 characters.')
@@ -141,7 +147,7 @@ def import_selected(data,owner,connect,pg):
         message=api(token,'messages/'+message_id,{'format':'full'});part=next((p for p in parts(message) if p['part_id']==part_id),None)
         if not part or not 0<part['size']<=visual.MAX_BYTES:raise ws.APIError(400,'Choose a PDF, PNG or JPEG attachment up to 4 MB.')
         body=part['body']
-        if body.get('attachmentId'):body=api(token,'messages/'+message_id+'/attachments/'+ident(body['attachmentId']))
+        if body.get('attachmentId'):body=api(token,'messages/'+message_id+'/attachments/'+attachment_reference(body['attachmentId']))
         encoded=body.get('data','')
         try:
             if len(encoded)>6_000_000:raise ValueError('size')

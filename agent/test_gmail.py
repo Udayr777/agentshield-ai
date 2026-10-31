@@ -63,3 +63,19 @@ class GmailTests(unittest.TestCase):
         with patch.object(gmail,'api') as network:
             gmail.delete_draft({'document_id':draft['document_id']},self.owner,app.connect,False);network.assert_not_called()
         self.assertEqual(gmail.status(self.owner,app.connect,False)['imports'],[])
+    def test_long_external_attachment_reference_is_downloaded_and_encoded(self):
+        self.install_connection();reference='opaque_'+'a'*1200+'+/=trailer'
+        message=self.fake_message();body=message['payload']['parts'][0]['body'];encoded=body.pop('data');body['attachmentId']=reference
+        paths=[]
+        def provider(token,path,*args,**kwargs):
+            paths.append(path)
+            if '/attachments/' in path:
+                self.assertEqual(path,'messages/abcdef123/attachments/'+urllib.parse.quote(reference,safe=''))
+                return {'data':encoded,'size':body['size']}
+            return message
+        with patch.object(gmail,'api',side_effect=provider):
+            result=gmail.import_selected({'message_id':'abcdef123','part_id':'0.1','confirmed':True},self.owner,app.connect,False)
+        self.assertFalse(result['duplicate']);self.assertEqual(len(paths),2)
+        self.assertEqual(visual.get_document(result['document_id'],self.owner,app.connect,False)['source'],'gmail')
+        for invalid in ('','bad\nreference','x'*8193,None):
+            with self.assertRaises(ws.APIError):gmail.attachment_reference(invalid)
