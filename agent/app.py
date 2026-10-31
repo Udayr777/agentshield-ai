@@ -222,6 +222,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/documents/upload':return self.reply(200,visual.ingest(data,owner,connect,bool(PG)))
             if self.path=='/documents/segment':return self.reply(200,visual.segment(data,owner,connect,bool(PG)))
             if self.path=='/documents/explain-visual':return self.reply(200,inspection.explain(data,owner,connect,bool(PG)))
+            if self.path=='/documents/visual-clip':return self.reply(200,inspection.clip(data,owner,connect,bool(PG)))
             if self.path=='/documents/visual-fixture':return self.reply(200,inspection.load_fixture(data,owner,connect,bool(PG)))
             if self.path=='/documents/confirm':
                 with LOCK:return self.reply(200,visual.confirm(data,owner,connect,bool(PG)))

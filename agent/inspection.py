@@ -98,3 +98,38 @@ def explain(data,owner,connect,pg):
         raise ws.APIError(503,'Muse explanation failed. Local findings remain available; no automatic retry or payment action occurred.') from None
     with connect() as db:ws.query(db,'UPDATE inspection_explanations SET payload=? WHERE document_id=? AND owner_id=?',(json.dumps(output),doc['id'],owner),pg)
     return output
+
+def clip(data,owner,connect,pg):
+    """Muse writes bounded captions; the browser renders video, not the model API."""
+    import os,json,time
+    import visual,workspace as ws
+    from meta_client import complete_json
+    doc=visual.get_document(data.get('document_id'),owner,connect,pg)
+    if doc.get('source')=='gmail':raise ws.APIError(403,'Gmail documents cannot be sent for Muse clip scripting.')
+    evidence=doc.get('inspection')
+    if not evidence or evidence.get('status')!='measured':raise ws.APIError(400,'Load a PDF with measured first-page findings.')
+    if os.getenv('ANALYZER_MODE')!='meta':raise ws.APIError(400,'Muse clip scripting requires live Meta mode.')
+    cache_id=doc['id']+':clip-v1';now=int(time.time())
+    with connect() as db:
+        if pg:db.execute('SELECT pg_advisory_xact_lock(4815162347)')
+        row=ws.query(db,'SELECT payload FROM inspection_explanations WHERE document_id=? AND owner_id=?',(cache_id,owner),pg).fetchone()
+        if row:
+            result=json.loads(row[0])
+            if result.get('status')=='complete':return result
+            raise ws.APIError(409,'Clip scripting was already attempted. No automatic retry is made.')
+        if ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0]>=5 or ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20:raise ws.APIError(429,'Shared explanation budget reached: five/account/hour and twenty/deployment/hour.')
+        ws.query(db,'INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',(cache_id,owner,json.dumps({'status':'pending'}),now),pg)
+    scene={'type':'object','properties':{'caption':{'type':'string'},'evidence_ids':{'type':'array','items':{'type':'string'}}},'required':['caption','evidence_ids'],'additionalProperties':False}
+    schema={'type':'object','properties':{'scenes':{'type':'array','items':scene,'minItems':3,'maxItems':3}},'required':['scenes'],'additionalProperties':False}
+    try:
+        result,meta=complete_json('visual_clip_script','Write exactly THREE short scenes for an 18-second invoice VISIBILITY explanation: (1) observable findings, (2) their uncertainty/meaning, (3) next manual review step. EACH caption must contain 4 to 14 whitespace-separated words and at most 120 characters, suitable for six seconds of narration. Cite only supplied evidence IDs; use an empty list when making a general caution. Do not invent invoice text, amount, merchant, fraud, OCR, SAM, steganography or payment results. If no findings, say no findings under these checks does NOT establish safety. Never say clean, safe, authentic, approved or payment blocked: only first-page visibility is known. Next step must be inspect regions and manually verify fields/recipient, not execute a payment. All captions are plain text, no markup.',{'findings':evidence['findings'],'limits':evidence['limits'],'scope':'First-page PDF visibility only; no payment decision is supplied.'},schema)
+        scenes=result.get('scenes');allowed={f['id'] for f in evidence['findings']}
+        if not isinstance(scenes,list) or len(scenes)!=3:raise ValueError('Scene count')
+        for s in scenes:
+            if not isinstance(s,dict) or not isinstance(s.get('caption'),str) or not 4<=len(s['caption'].split())<=14 or len(s['caption'])>120 or not isinstance(s.get('evidence_ids'),list) or any(not isinstance(i,str) or i not in allowed for i in s['evidence_ids']):raise ValueError('Invalid scene')
+        output={'status':'complete','duration_seconds':18,'scenes':scenes,'model':meta['model'],'usage':meta.get('usage',{}),'source':'Muse script; AgentShield browser animation; optional browser voice. Not Meta-generated video or audio.'}
+    except Exception:
+        with connect() as db:ws.query(db,'UPDATE inspection_explanations SET payload=? WHERE document_id=? AND owner_id=?',(json.dumps({'status':'failed'}),cache_id,owner),pg)
+        raise ws.APIError(503,'Muse clip script failed validation or generation. No automatic retry or payment action occurred.') from None
+    with connect() as db:ws.query(db,'UPDATE inspection_explanations SET payload=? WHERE document_id=? AND owner_id=?',(json.dumps(output),cache_id,owner),pg)
+    return output

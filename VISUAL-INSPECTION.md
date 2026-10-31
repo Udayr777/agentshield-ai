@@ -18,6 +18,16 @@ Only page 1 is inspected. At most 400 extracted spans, 400 text traces and 80 ob
 
 ## Optional Muse explanation
 
+### 18-second invoice brief
+
+Beside the findings, click **Generate Muse brief**, then **Play / replay 18s**. A separate explicit Muse call writes exactly three captions (4–14 words each) citing valid finding IDs: observations, meaning/uncertainty, and next manual review step. The server fixes the duration at 18 seconds and supplies only numeric first-page evidence, not invoice text or its preview. Scripts share the existing explanation quota and are cached per private document; failed attempts are not automatically retried.
+
+AgentShield draws the actual preview, highlighted regions, captions and progress onto a browser canvas. This is code-rendered animation from a Muse-written script, not Meta video generation. Optional narration selects a local English browser voice; if none is available, captions remain. No voice-cloning or Meta TTS service is used. Voice timing varies by device and long/slow narration may be cut at a scene boundary.
+
+Verified local Go gateway + Neon + live `muse-spark-1.3` scripting: three valid captions, fixed 18-second duration, valid evidence references and identical cached second response. The single generation used 1,426 tokens. All 43 Python tests, Go tests and frontend production build passed. Browser narration/recording was not exercised through automation.
+
+On browsers supporting canvas capture and WebM MediaRecorder, **Render silent WebM** records the 18-second animation, then offers a download. Keep the tab visible while rendering. Stopping early produces a shorter recording. Export includes captions and the private invoice preview, but no synthesized voice audio; only share synthetic examples. Other browsers retain on-page playback/transcript. Replay/export make no new model calls. Generation is unavailable for Gmail imports and raster-only/unmeasured evidence. Leaving the page stops playback/voice and revokes temporary media URLs. Browser/device playback and export need manual validation; compilation and server tests do not prove device media support.
+
 Click **Ask Muse to explain these findings** in live Meta mode. Only numerical findings, fixed check names, region coordinates and limitations are supplied; original image, extracted text and merchant identifiers are not supplied. Output references must match actual evidence IDs. Explanations cannot change evidence or authorize actions. Completed results are cached privately by document; failed attempts are not automatically retried. New calls are limited to five/account/hour and twenty/deployment/hour, including failures.
 
 Gmail imports can be inspected locally, but server and UI both prohibit the external explanation. All document access remains owner-scoped. No observations are automatically published to the public gallery or threat feed.

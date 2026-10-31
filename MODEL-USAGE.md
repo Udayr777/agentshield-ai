@@ -1,5 +1,7 @@
 # Meta model usage in AgentShield
 
+Invoice briefs add an explicit `visual_clip_script` Muse call: exactly three bounded captions with validated evidence references, cached per document and sharing inspection quotas. The browser renders an 18-second animation and optional silent WebM export. Optional narration uses a local browser voice, not a Meta audio model. There is no claim of Meta-generated video/audio. Gmail scripts remain blocked. See [Visual inspection](VISUAL-INSPECTION.md).
+
 Visual evidence explanations are explicit, bounded Muse calls supplied only with numeric first-page observations and fixed check metadata. References are validated against finding IDs; completed responses are cached. Gmail imports cannot use this call. Contrast enhancement and visibility heuristics run locally without models. See [Visual inspection](VISUAL-INSPECTION.md).
 
 Security frontier adds explicit live policy synthesis using `POLICY_MODEL` or the configured `META_MODEL`. One bounded structured-output call receives only aggregate synthetic threat categories; the actual model and token usage are retained with the proposal. Code validates the finite rule schema and runs 1,024 fixture variations before owner promotion. No generated code runs, no base guardrails are rewritten, and no fine-tuned Llama model is claimed. Known shared signatures and active additive policies can block before any model call. Passkey verification itself makes no model calls. See [Security frontier](SECURITY-FRONTIER.md).

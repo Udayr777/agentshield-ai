@@ -28,6 +28,22 @@ class InspectionTests(unittest.TestCase):
         out=io.BytesIO();Image.new('RGB',(100,100),'white').save(out,format='PNG')
         result=inspection.inspect('data:image/png;base64,'+base64.b64encode(out.getvalue()).decode())
         self.assertEqual(result['status'],'not_measured');self.assertTrue(result['enhanced_preview']);self.assertEqual(inspection.inspect('')['status'],'not_measured')
+    def test_clip_script_is_bounded_private_and_cached(self):
+        doc=self.upload('white_text');gmail=self.upload('white_text','gmail')
+        result={'scenes':[{'caption':'Low contrast text was observed in the first page.','evidence_ids':['e1']},{'caption':'These observations do not establish whether this invoice is authentic.','evidence_ids':[]},{'caption':'Inspect highlighted regions and manually verify fields and recipient.','evidence_ids':[]}]}
+        with patch.dict(os.environ,{'ANALYZER_MODE':'meta'}),patch('meta_client.complete_json',return_value=(result,{'model':'test-meta','usage':{}})) as model:
+            with self.assertRaises(ws.APIError):inspection.clip({'document_id':doc['id']},'another-owner',app.connect,False)
+            with self.assertRaises(ws.APIError):inspection.clip({'document_id':gmail['id']},self.owner,app.connect,False)
+            first=inspection.clip({'document_id':doc['id']},self.owner,app.connect,False)
+            self.assertEqual(first['duration_seconds'],18);self.assertEqual(len(first['scenes']),3)
+            self.assertEqual(first,inspection.clip({'document_id':doc['id']},self.owner,app.connect,False));self.assertEqual(model.call_count,1)
+            self.assertNotIn('attacker_wallet',json.dumps(model.call_args.args[2]));self.assertNotIn('preview',model.call_args.args[2])
+    def test_clip_rejects_invented_evidence_and_does_not_retry(self):
+        doc=self.upload('white_text');scene={'caption':'This is an invented unsupported evidence reference.','evidence_ids':['fake']}
+        with patch.dict(os.environ,{'ANALYZER_MODE':'meta'}),patch('meta_client.complete_json',return_value=({'scenes':[scene]*3},{'model':'test-meta'})) as model:
+            with self.assertRaises(ws.APIError):inspection.clip({'document_id':doc['id']},self.owner,app.connect,False)
+            with self.assertRaises(ws.APIError):inspection.clip({'document_id':doc['id']},self.owner,app.connect,False)
+            self.assertEqual(model.call_count,1)
     def test_explanation_owner_gmail_reference_validation_and_cache(self):
         doc=self.upload('white_text');gmail=self.upload('white_text','gmail');ids=[f['id'] for f in doc['inspection']['findings']]
         with patch.dict(os.environ,{'ANALYZER_MODE':'meta'}),patch('meta_client.complete_json',return_value=({'summary':'Low contrast requires review.','evidence_ids':ids[:1],'next_step':'Inspect the original.'},{'model':'test-meta','usage':{}})) as model:
