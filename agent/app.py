@@ -7,7 +7,7 @@ import workspace as ws
 import visual, lifecycle as lc
 import ledger, judge, helpdesk, council, gmail_link as gmail
 import threatnet,policy_lab,escrow
-import inspection
+import inspection,password_reset
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -41,7 +41,7 @@ def init():
         ws.migrate(db,bool(PG))
         visual.migrate(db)
         ledger.migrate(db);judge.migrate(db);council.migrate(db);gmail.migrate(db)
-        threatnet.migrate(db);policy_lab.migrate(db);escrow.migrate(db)
+        threatnet.migrate(db);policy_lab.migrate(db);escrow.migrate(db);password_reset.migrate(db)
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
@@ -153,6 +153,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path=='/health': return self.reply(200,{'status':'ok','storage':'postgresql' if PG else 'sqlite-local','mode':os.getenv('ANALYZER_MODE','mock')})
             self.internal();path=urlparse(self.path);params=parse_qs(path.query)
+            if path.path=='/password-reset/status':return self.reply(200,password_reset.status())
             if path.path=='/network/feed':return self.reply(200,threatnet.public_feed(connect,bool(PG)))
             if path.path=='/threats':return self.reply(200,lc.gallery(connect,bool(PG)))
             if path.path=='/arena/state':return self.reply(200,lc.state(params.get('id',[''])[0],connect,bool(PG)))
@@ -193,6 +194,8 @@ class Handler(BaseHTTPRequestHandler):
             if length<1 or length>limit: return self.reply(400,{'error':'Invalid body size'})
             data=json.loads(self.rfile.read(length))
             if not isinstance(data,dict):raise ws.APIError(400,'JSON object required.')
+            if self.path=='/password-reset/request':return self.reply(200,password_reset.request(data,connect,bool(PG)))
+            if self.path=='/password-reset/confirm':return self.reply(200,password_reset.reset(data,connect,bool(PG)))
             if self.path in ('/register','/login'):return self.reply(200,ws.auth(data,self.path=='/register',connect,bool(PG)))
             if self.path=='/public/help':return self.reply(200,helpdesk.public_chat(data))
             if self.path=='/extension/import':return self.reply(200,lc.extension_import(data,connect,bool(PG)))

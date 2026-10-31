@@ -130,6 +130,9 @@ func boundary(next http.Handler) http.Handler {
 		if r.URL.Path == "/api/documents/upload" {
 			max = 10
 		}
+		if strings.HasPrefix(r.URL.Path, "/api/auth/password-reset/") && r.URL.Path != "/api/auth/password-reset/status" {
+			max = 5
+		}
 		if r.URL.Path == "/api/auth/login" {
 			max = 10
 		}
@@ -239,6 +242,9 @@ func authHandler(path string) http.HandlerFunc {
 	}
 }
 func workspaceRoutes(mux *http.ServeMux) {
+	for _, path := range []string{"/password-reset/status", "/password-reset/request", "/password-reset/confirm"} {
+		mux.HandleFunc("/api/auth"+path, proxyAgent(path))
+	}
 	frontierRoutes(mux)
 	gmailRoutes(mux)
 	for _, path := range []string{"/judge-pack", "/help", "/help/chat", "/ledger", "/ledger/verify", "/council", "/council/review", "/council/standard"} {

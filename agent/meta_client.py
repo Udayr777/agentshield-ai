@@ -10,7 +10,7 @@ def load_config(path=None):
     root=Path(__file__).resolve().parents[1]
     paths=[Path(path)] if path else [root/'.env.local',root/'.env',root/'.env.gmail']
     allowed={'ANALYZER_MODE','META_API_KEY','MODEL_API_KEY','META_MODEL','META_BASE_URL','META_MAX_COMPLETION_TOKENS','META_TIMEOUT_SECONDS','META_REASONING_EFFORT','META_SAM_MODEL','META_VISUAL_MODE','DATABASE_URL','DATABASE_URL_UNPOOLED','COOKIE_SECURE'}
-    allowed.update({'LEDGER_SIGNING_KEY','LEDGER_KEY_FILE'})
+    allowed.update({'LEDGER_SIGNING_KEY','LEDGER_KEY_FILE','RESEND_API_KEY','PASSWORD_RESET_FROM','APP_PUBLIC_URL'})
     allowed.update({'GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REDIRECT_URI','GMAIL_TOKEN_KEY'})
     allowed.update({'POLICY_MODEL','WEBAUTHN_ORIGIN','EXPLANATION_ACCOUNT_HOURLY_LIMIT','EXPLANATION_GLOBAL_HOURLY_LIMIT'})
     for path in paths:
