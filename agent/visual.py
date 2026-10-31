@@ -5,6 +5,8 @@ from meta_client import complete_json, record, MetaError
 import workspace as ws
 
 MAX_BYTES=4*1024*1024
+MAX_PDF_PAGES=20
+MAX_GMAIL_TEXT=80000
 def migrate(db):
     for sql in Path(__file__).with_name('lifecycle.sql').read_text().split(';'):
         if sql.strip():db.execute(sql)
@@ -36,11 +38,13 @@ def ingest(data,owner,connect,pg,source='upload'):
             if not raw.startswith(b'%PDF-'):raise ValueError('PDF signature')
             import fitz
             with fitz.open(stream=raw,filetype='pdf') as doc:
-                if doc.needs_pass or not 1<=doc.page_count<=5:raise ws.APIError(400,'Use an unencrypted PDF with 1–5 pages.')
+                if doc.needs_pass:raise ws.APIError(400,'This PDF is password-protected. Use an unencrypted copy.')
+                if not 1<=doc.page_count<=MAX_PDF_PAGES:raise ws.APIError(400,f'This PDF has {doc.page_count} pages. Use a PDF with 1–{MAX_PDF_PAGES} pages.')
                 pages=doc.page_count
                 if any(p.rect.width>3000 or p.rect.height>3000 for p in doc):raise ws.APIError(400,'Page dimensions exceed the document limit.')
                 text='\n'.join(p.get_text() for p in doc)
-                if len(text)>8000:raise ws.APIError(400,'Document text exceeds 8,000 characters. Split the invoice instead of truncating its security evidence.')
+                text_limit=MAX_GMAIL_TEXT if source=='gmail' else 8000
+                if len(text)>text_limit:raise ws.APIError(400,f'Document text exceeds {text_limit:,} characters. Split the invoice instead of truncating its evidence.')
                 page=doc[0];scale=min(1.7,1500/max(page.rect.width,page.rect.height));pix=page.get_pixmap(matrix=fitz.Matrix(scale,scale),alpha=False)
                 width,height=pix.width,pix.height;preview='data:image/png;base64,'+base64.b64encode(pix.tobytes('png')).decode()
                 lines=[]
@@ -72,6 +76,7 @@ def ingest(data,owner,connect,pg,source='upload'):
     except ImportError:raise ws.APIError(503,'Document runtime missing. Install agent/requirements.txt in the local Python environment.')
     except Exception:raise ws.APIError(400,'File cannot be safely decoded. Choose a valid PDF or image.')
     fields=proposal(text,anchors);mode='pdf_text' if mime=='application/pdf' else 'manual'
+    if source=='gmail':fields['invoice_text']=text # Preserve all locally inspected pages, never truncate.
     if data.get('use_muse'):
         if source=='gmail':raise ws.APIError(403,'Gmail imports cannot be sent to Meta in this version.')
         if os.getenv('ANALYZER_MODE')!='meta':raise ws.APIError(400,'Live extraction requires meta mode. Turn off Muse extraction for local processing.')

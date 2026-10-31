@@ -159,6 +159,7 @@ class Handler(BaseHTTPRequestHandler):
             self.internal()
             length=int(self.headers.get('Content-Length','0'))
             limit=6*1024*1024 if self.path in ('/documents/upload','/extension/import') else 65536
+            if self.path=='/documents/confirm':limit=512*1024
             if length<1 or length>limit: return self.reply(400,{'error':'Invalid body size'})
             data=json.loads(self.rfile.read(length))
             if not isinstance(data,dict):raise ws.APIError(400,'JSON object required.')

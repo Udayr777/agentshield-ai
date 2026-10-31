@@ -170,6 +170,9 @@ func proxyAgent(path string) http.HandlerFunc {
 		var body io.Reader
 		if r.Method == "POST" {
 			limit := int64(32768)
+			if r.URL.Path == "/api/documents/confirm" {
+				limit = 512 * 1024
+			}
 			if r.URL.Path == "/api/documents/upload" || r.URL.Path == "/api/extension/import" {
 				limit = 6 * 1024 * 1024
 			}

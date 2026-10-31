@@ -11,6 +11,8 @@ This connector is application code, not the assistant's Gmail account connector.
 5. Sign in to AgentShield at its hosted origin, open **Gmail invoice import**, read the notice and click **Connect Gmail**. Complete consent yourself in Google using an added test account. A local preview cannot complete a hosted-only callback; either use the hosted app or explicitly register/configure a separate local callback.
 6. Search, select an email, then click **Import this attachment**. Only PDF/PNG/JPEG up to 4 MB are accepted. Review local geometry and fields in Visual invoice guard. No automatic invoice authorization occurs.
 
+PDFs can contain 1–20 unencrypted pages. Local-only Gmail documents preserve up to 80,000 extracted characters across all pages; their confirmed local records use the same text bound. The preview and geometry overlay show page 1. Model-eligible uploads retain an 8,000-character bound. Nothing silently drops later-page text; larger files must be split.
+
 ## Security and privacy boundaries
 
 - Authorization code flow uses Google's OAuth library, PKCE S256, a ten-minute random state hashed in storage, single-use state consumption and binding to an active AgentShield session. The callback uses fixed application routes and strips the authorization code via a same-origin redirect. Codes and tokens are not logged.

@@ -79,3 +79,22 @@ class GmailTests(unittest.TestCase):
         self.assertEqual(visual.get_document(result['document_id'],self.owner,app.connect,False)['source'],'gmail')
         for invalid in ('','bad\nreference','x'*8193,None):
             with self.assertRaises(ws.APIError):gmail.attachment_reference(invalid)
+    def test_eight_page_local_gmail_pdf_preserves_text_and_can_be_confirmed(self):
+        import fitz
+        with fitz.open() as pdf:
+            for n in range(8):
+                page=pdf.new_page();page.insert_text((40,40),f'Invoice INV-MULTI page {n+1}',fontsize=10)
+                page.insert_text((40,70),('Synthetic supporting details for local inspection only.\n'*45),fontsize=8)
+                page.insert_text((40,720),f'PAGE_{n+1}_END',fontsize=10)
+            raw=pdf.tobytes()
+        data={'filename':'eight-pages.pdf','mime':'application/pdf','data':base64.b64encode(raw).decode(),'use_muse':False}
+        with patch.object(visual,'complete_json') as model:doc=visual.ingest(data,self.owner,app.connect,False,source='gmail');model.assert_not_called()
+        self.assertEqual(doc['page_count'],8);self.assertGreater(len(doc['fields']['invoice_text']),8000);self.assertIn('PAGE_8_END',doc['fields']['invoice_text'])
+        inv=visual.confirm({'document_id':doc['id'],'fields':{'reference':'INV-MULTI','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':doc['fields']['invoice_text']}},self.owner,app.connect,False)
+        self.assertEqual(inv['source'],'gmail');self.assertIn('PAGE_8_END',inv['text'])
+        with self.assertRaises(ws.APIError):visual.ingest(data,self.owner,app.connect,False) # Model-eligible uploads keep their smaller text bound.
+        with fitz.open() as pdf:
+            for _ in range(21):pdf.new_page()
+            too_many={**data,'data':base64.b64encode(pdf.tobytes()).decode()}
+        with self.assertRaises(ws.APIError) as error:visual.ingest(too_many,self.owner,app.connect,False,source='gmail')
+        self.assertIn('21 pages',error.exception.message)

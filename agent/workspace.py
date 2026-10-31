@@ -66,7 +66,8 @@ def list_invoices(owner,connect,pg):
     return [invoice_dict(row) for row in rows]
 def create_invoice(data,owner,connect,pg,origin='manual'):
     amount=data.get('amount_cents'); text=data.get('text','')
-    if type(amount) is not int or not 1<=amount<=10000000 or not isinstance(text,str) or not 1<=len(text)<=8000: raise APIError(400,'Use integer cents and invoice text of 1–8000 characters.')
+    text_limit=80000 if origin=='gmail' else 8000
+    if type(amount) is not int or not 1<=amount<=10000000 or not isinstance(text,str) or not 1<=len(text)<=text_limit: raise APIError(400,f'Use integer cents and invoice text of 1–{text_limit:,} characters.')
     vals=[str(data.get(k,'')).strip() for k in ('reference','vendor','recipient','due_date')]
     if any(not v or len(v)>120 for v in vals): raise APIError(400,'Complete the reference, vendor, recipient and due date.')
     try: datetime.date.fromisoformat(vals[3])
