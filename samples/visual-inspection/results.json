@@ -1,0 +1,145 @@
+{
+  "version": "visibility-v1",
+  "scope": "15 synthetic first-page PDF fixtures: three clean and three variants of each of four tampering families. Not representative real-world accuracy. Timings include local image enhancement and geometry checks, exclude upload, PDF render, database, model and network.",
+  "clean": 3,
+  "tampered": 12,
+  "false_positive_documents": 0,
+  "detected_tampered_documents": 12,
+  "rows": [
+    {
+      "fixture": "clean-1.pdf",
+      "label": "clean",
+      "family": "clean",
+      "findings": [],
+      "local_inspection_ms": 149.94
+    },
+    {
+      "fixture": "clean-2.pdf",
+      "label": "clean",
+      "family": "clean",
+      "findings": [],
+      "local_inspection_ms": 69.17
+    },
+    {
+      "fixture": "clean-3.pdf",
+      "label": "clean",
+      "family": "clean",
+      "findings": [],
+      "local_inspection_ms": 55.6
+    },
+    {
+      "fixture": "white_text-1.pdf",
+      "label": "tampered",
+      "family": "white_text",
+      "findings": [
+        "low_contrast",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 64.79
+    },
+    {
+      "fixture": "white_text-2.pdf",
+      "label": "tampered",
+      "family": "white_text",
+      "findings": [
+        "low_contrast",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 66.57
+    },
+    {
+      "fixture": "white_text-3.pdf",
+      "label": "tampered",
+      "family": "white_text",
+      "findings": [
+        "low_contrast",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 51.27
+    },
+    {
+      "fixture": "tiny_text-1.pdf",
+      "label": "tampered",
+      "family": "tiny_text",
+      "findings": [
+        "tiny_text"
+      ],
+      "local_inspection_ms": 52.43
+    },
+    {
+      "fixture": "tiny_text-2.pdf",
+      "label": "tampered",
+      "family": "tiny_text",
+      "findings": [
+        "tiny_text"
+      ],
+      "local_inspection_ms": 46.3
+    },
+    {
+      "fixture": "tiny_text-3.pdf",
+      "label": "tampered",
+      "family": "tiny_text",
+      "findings": [
+        "tiny_text"
+      ],
+      "local_inspection_ms": 64.9
+    },
+    {
+      "fixture": "invisible_layer-1.pdf",
+      "label": "tampered",
+      "family": "invisible_layer",
+      "findings": [
+        "invisible_text_layer",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 70.65
+    },
+    {
+      "fixture": "invisible_layer-2.pdf",
+      "label": "tampered",
+      "family": "invisible_layer",
+      "findings": [
+        "invisible_text_layer",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 52.7
+    },
+    {
+      "fixture": "invisible_layer-3.pdf",
+      "label": "tampered",
+      "family": "invisible_layer",
+      "findings": [
+        "invisible_text_layer",
+        "render_visibility_mismatch"
+      ],
+      "local_inspection_ms": 56.42
+    },
+    {
+      "fixture": "overlap-1.pdf",
+      "label": "tampered",
+      "family": "overlap",
+      "findings": [
+        "overlapping_text"
+      ],
+      "local_inspection_ms": 55.35
+    },
+    {
+      "fixture": "overlap-2.pdf",
+      "label": "tampered",
+      "family": "overlap",
+      "findings": [
+        "overlapping_text"
+      ],
+      "local_inspection_ms": 65.92
+    },
+    {
+      "fixture": "overlap-3.pdf",
+      "label": "tampered",
+      "family": "overlap",
+      "findings": [
+        "overlapping_text"
+      ],
+      "local_inspection_ms": 84.64
+    }
+  ]
+}

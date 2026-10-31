@@ -7,6 +7,7 @@ import workspace as ws
 import visual, lifecycle as lc
 import ledger, judge, helpdesk, council, gmail_link as gmail
 import threatnet,policy_lab,escrow
+import inspection
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -220,6 +221,8 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/ledger/verify':return self.reply(200,ledger.inspect(owner,connect,bool(PG),data.get('checkpoint')))
             if self.path=='/documents/upload':return self.reply(200,visual.ingest(data,owner,connect,bool(PG)))
             if self.path=='/documents/segment':return self.reply(200,visual.segment(data,owner,connect,bool(PG)))
+            if self.path=='/documents/explain-visual':return self.reply(200,inspection.explain(data,owner,connect,bool(PG)))
+            if self.path=='/documents/visual-fixture':return self.reply(200,inspection.load_fixture(data,owner,connect,bool(PG)))
             if self.path=='/documents/confirm':
                 with LOCK:return self.reply(200,visual.confirm(data,owner,connect,bool(PG)))
             if self.path=='/threats/share':return self.reply(200,lc.share(data,owner,connect,bool(PG)))

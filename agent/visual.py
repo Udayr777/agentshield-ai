@@ -3,11 +3,13 @@ import base64, hashlib, io, json, os, re, time, uuid, urllib.request, urllib.err
 from pathlib import Path
 from meta_client import complete_json, record, MetaError
 import workspace as ws
+import inspection
 
 MAX_BYTES=4*1024*1024
 MAX_PDF_PAGES=20
 MAX_GMAIL_TEXT=80000
 def migrate(db):
+    db.execute('CREATE TABLE IF NOT EXISTS inspection_explanations (document_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, payload TEXT NOT NULL, created_at BIGINT NOT NULL)')
     for sql in Path(__file__).with_name('lifecycle.sql').read_text().split(';'):
         if sql.strip():db.execute(sql)
     pg=not hasattr(db,'executescript')
@@ -32,7 +34,7 @@ def ingest(data,owner,connect,pg,source='upload'):
     try:raw=base64.b64decode(data.get('data',''),validate=True)
     except Exception:raise ws.APIError(400,'Invalid file encoding.')
     if not raw or len(raw)>MAX_BYTES:raise ws.APIError(400,'Choose a file up to 4 MB.')
-    text='';anchors=[];preview='';pages=1;hidden=False;width=0;height=0
+    text='';anchors=[];preview='';pages=1;hidden=False;width=0;height=0;inspection_result=None
     try:
         if mime=='application/pdf':
             if not raw.startswith(b'%PDF-'):raise ValueError('PDF signature')
@@ -47,6 +49,7 @@ def ingest(data,owner,connect,pg,source='upload'):
                 if len(text)>text_limit:raise ws.APIError(400,f'Document text exceeds {text_limit:,} characters. Split the invoice instead of truncating its evidence.')
                 page=doc[0];scale=min(1.7,1500/max(page.rect.width,page.rect.height));pix=page.get_pixmap(matrix=fitz.Matrix(scale,scale),alpha=False)
                 width,height=pix.width,pix.height;preview='data:image/png;base64,'+base64.b64encode(pix.tobytes('png')).decode()
+                inspection_result=inspection.inspect(preview,page)
                 lines=[]
                 for block in page.get_text('dict')['blocks']:
                     for line in block.get('lines',[]):
@@ -75,6 +78,7 @@ def ingest(data,owner,connect,pg,source='upload'):
     except ws.APIError:raise
     except ImportError:raise ws.APIError(503,'Document runtime missing. Install agent/requirements.txt in the local Python environment.')
     except Exception:raise ws.APIError(400,'File cannot be safely decoded. Choose a valid PDF or image.')
+    if inspection_result is None:inspection_result=inspection.inspect(preview)
     fields=proposal(text,anchors);mode='pdf_text' if mime=='application/pdf' else 'manual'
     if source=='gmail':fields['invoice_text']=text # Preserve all locally inspected pages, never truncate.
     if data.get('use_muse'):
@@ -97,6 +101,7 @@ def ingest(data,owner,connect,pg,source='upload'):
     ident=uuid.uuid4().hex
     payload={'id':ident,'filename':Path(name).name,'mime':mime,'sha256':hashlib.sha256(raw).hexdigest(),'preview':preview,'width':width,'height':height,'page_count':pages,'preview_page':1,'hidden_text_detected':hidden,'extraction_mode':mode,'fields':fields,'anchors':fields.get('anchors',anchors),'sam':{'status':'not_run','model':'sam-3.1'},'requires_review':True,'privacy':'Original images and text remain private; public sharing is geometry-only.'}
     payload['source']=source
+    payload['inspection']=inspection_result
     with connect() as db:ws.query(db,'INSERT INTO documents (id,owner_id,filename,payload,created_at) VALUES (?,?,?,?,?)',(ident,owner,Path(name).name,json.dumps(payload),int(time.time())),pg)
     return payload
 def get_document(ident,owner,connect,pg):

@@ -4,6 +4,8 @@ Private synthetic invoices, a read-only Muse copilot, and a Go gateway that sepa
 
 The **Security frontier** workspace adds opt-in shared synthetic threat signatures, real WebAuthn verification for simulated invoice holds, and model-proposed additive policies with a 1,024-fixture benchmark and explicit promotion/rollback. See [Security frontier](SECURITY-FRONTIER.md) for setup, a demo walkthrough and limitations.
 
+The **Visual invoice guard** includes original/enhanced/overlay comparison, first-page PDF visibility heuristics, optional evidence-bound Muse explanations, and one-click synthetic fixtures. See [Visual inspection](VISUAL-INSPECTION.md) for thresholds, privacy limits and the reproducible 15-document benchmark.
+
 Hackathon prototype with private accounts, visual invoice inspection, read-only copilots, ten observable controls, signed audit chains and an adversarial replay lab. This repository does not independently attest when each contribution was created; submission materials must identify event-period contributions accurately.
 
 ## Start locally on Windows
