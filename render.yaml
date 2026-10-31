@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: agentshield-ai
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/ready
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: META_API_KEY
+        sync: false
+      - key: META_MODEL
+        value: muse-spark-1.3
+      - key: META_BASE_URL
+        value: https://api.meta.ai/v1
+      - key: META_SAM_MODEL
+        value: sam-3.1
+      - key: ANALYZER_MODE
+        value: meta
+      - key: META_MAX_COMPLETION_TOKENS
+        value: "2048"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SERVICE_TOKEN
+        generateValue: true
+      - key: LEDGER_SIGNING_KEY
+        generateValue: true

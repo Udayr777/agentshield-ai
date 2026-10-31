@@ -1,0 +1,14 @@
+**/node_modules
+**/*.exe
+**/*.sqlite3
+.env
+.env.*
+.neon
+.ledger-key
+.venv
+.service-token
+.git
+.agents
+**/__pycache__
+**/*.sqlite3-*
+**/model-usage.jsonl

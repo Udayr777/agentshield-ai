@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: agentshield
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-demo-only}
+      POSTGRES_DB: agentshield
+    volumes: [audit-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U agentshield]
+      interval: 3s
+      retries: 20
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://agentshield:${POSTGRES_PASSWORD:-local-demo-only}@postgres:5432/agentshield
+      ANALYZER_MODE: ${ANALYZER_MODE:-mock}
+      META_API_KEY: ${META_API_KEY:-}
+      META_MODEL: ${META_MODEL:-muse-spark-1.3}
+      META_BASE_URL: ${META_BASE_URL:-https://api.meta.ai/v1}
+      META_MAX_COMPLETION_TOKENS: ${META_MAX_COMPLETION_TOKENS:-2048}
+      META_TIMEOUT_SECONDS: ${META_TIMEOUT_SECONDS:-45}
+      META_REASONING_EFFORT: ${META_REASONING_EFFORT:-low}
+      AGENT_BIND: 0.0.0.0
+      SERVICE_TOKEN_FILE: /run/agentshield/token
+      LEDGER_KEY_FILE: /run/agentshield/ledger-key
+    volumes: [service-secret:/run/agentshield]
+    healthcheck:
+      test: [CMD, python, '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/health", timeout=2)']
+      interval: 3s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      postgres: {condition: service_healthy}
+  gateway:
+    build: ./gateway
+    environment:
+      AGENT_URL: http://agent:8001
+      GATEWAY_ADDR: :8080
+      SERVICE_TOKEN_FILE: /run/agentshield/token
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    volumes: [service-secret:/run/agentshield:ro]
+    ports: ['127.0.0.1:8082:8080']
+    depends_on:
+      agent: {condition: service_healthy}
+  dashboard:
+    build: ./dashboard
+    ports: ['127.0.0.1:3000:80']
+    depends_on: [gateway]
+volumes:
+  audit-data:
+  service-secret:
