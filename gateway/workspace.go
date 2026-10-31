@@ -247,6 +247,7 @@ func workspaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/register", authHandler("/register"))
 	mux.HandleFunc("/api/auth/login", authHandler("/login"))
 	mux.HandleFunc("/api/auth/me", requireSession(proxyAgent("/session")))
+	mux.HandleFunc("/api/profile", requireSession(proxyAgent("/profile")))
 	mux.HandleFunc("/api/auth/logout", requireSession(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)

@@ -136,3 +136,6 @@ This is a synthetic finance demonstration: no real bank integrations or transfer
 
 ## Public feature guide
 Before sign-in, the landing page groups capabilities under Inspect, Explain, Defend and Verify, includes a practical FAQ, and offers app-only Zivvi help. The anonymous `/api/public/help` endpoint forwards only documentation and a validated question (600 characters maximum), never private invoice/account context. Live public help has per-process limits of three requests/minute and twenty/hour, counting failures; documentation fallback stays available. These reset on process restart and are not a distributed production quota. Authenticated invoice and payment APIs remain protected.
+
+## Account profile
+Open My profile in the top bar or View your profile in the sidebar. The authenticated profile shows display name, read-only sign-in email, membership date and active session count. Only display-name updates are accepted and are scoped to the server-resolved account. The sidebar has a full-width Sign out button with a loading state; successful sign-out revokes the current session and extension pairings and returns to Sign in.

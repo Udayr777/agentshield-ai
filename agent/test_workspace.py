@@ -10,6 +10,15 @@ class WorkspaceTests(unittest.TestCase):
         self.mode=patch.dict(os.environ,{'ANALYZER_MODE':'mock'});self.mode.start();app.init()
     def tearDown(self):self.mode.stop();self.db.stop();self.pg.stop();self.folder.cleanup()
     def account(self,name):return ws.auth({'email':name+'@example.test','name':name,'password':'Synthetic-test-password-2026!'},True,app.connect,False)
+    def test_profile_updates_only_display_name_and_persists_in_session(self):
+        a=self.account('alice');b=self.account('bob');owner=a['user']['id']
+        p=ws.profile(owner,app.connect,False,{'name':'  Alice Updated  '})
+        self.assertEqual(p['user']['name'],'Alice Updated');self.assertEqual(p['active_sessions'],1)
+        self.assertEqual(ws.session(a['token'],app.connect,False)['name'],'Alice Updated')
+        self.assertEqual(ws.profile(b['user']['id'],app.connect,False)['user']['name'],'bob')
+        for data in ({'name':''},{'name':'x'*61},{'name':'test','email':'other@example.test'},{'name':'test','owner_id':b['user']['id']}):
+            with self.assertRaises(ws.APIError):ws.profile(owner,app.connect,False,data)
+        self.assertEqual(ws.profile(owner,app.connect,False)['user']['email'],'alice@example.test')
     def test_identity_invoice_isolation_and_session_revocation(self):
         a=self.account('alice');b=self.account('bob')
         owner=a['user']['id'];foreign=b['user']['id'];inv=ws.list_invoices(owner,app.connect,False)[0]

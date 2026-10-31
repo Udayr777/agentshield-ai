@@ -169,6 +169,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/documents/visual-clip':return self.reply(200,inspection.cached_clip(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/arena/inbox':return self.reply(200,lc.inbox(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/session': return self.reply(200,{'user':user,'mode':os.getenv('ANALYZER_MODE','mock'),'storage':'postgresql' if PG else 'sqlite'})
+            if path.path=='/profile':return self.reply(200,ws.profile(user['id'],connect,bool(PG)))
             if path.path=='/invoices': return self.reply(200,ws.list_invoices(user['id'],connect,bool(PG)))
             if path.path=='/chat': return self.reply(200,ws.history(parse_qs(path.query).get('invoice_id',[''])[0],user['id'],connect,bool(PG),self.chat_scope()))
             if self.path=='/events': return self.reply(200,events(user['id']))
@@ -198,6 +199,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
+            if self.path=='/profile':return self.reply(200,ws.profile(owner,connect,bool(PG),data))
             session_token=self.headers.get('Authorization','').removeprefix('Bearer ')
             if self.path=='/network/preferences':return self.reply(200,threatnet.set_preference(data,owner,connect,bool(PG)))
             if self.path=='/policies/propose':return self.reply(200,policy_lab.propose(owner,connect,bool(PG)))

@@ -55,6 +55,16 @@ def logout(token,connect,pg):
         if row:query(db,'DELETE FROM extension_tokens WHERE owner_id=?',(row[0],),pg)
         query(db,'DELETE FROM sessions WHERE token_hash=?',(digest,),pg)
 
+def profile(owner,connect,pg,data=None):
+    if data is not None:
+        if set(data)!={'name'} or not isinstance(data.get('name'),str) or not 1<=len(data['name'].strip())<=60:raise APIError(400,'Enter a display name of 1–60 characters.')
+        with connect() as db:query(db,'UPDATE users SET name=? WHERE id=?',(data['name'].strip(),owner),pg)
+    with connect() as db:
+        row=query(db,'SELECT id,name,email,created_at FROM users WHERE id=?',(owner,),pg).fetchone()
+        if not row:raise APIError(404,'Account not found.')
+        count=query(db,'SELECT COUNT(*) FROM sessions WHERE user_id=? AND expires_at>?',(owner,int(time.time())),pg).fetchone()[0]
+    return {'user':{'id':row[0],'name':row[1],'email':row[2]},'created_at':row[3],'active_sessions':count}
+
 FIELDS='id,reference,vendor,recipient,amount_cents,due_date,invoice_text,status,created_at,origin'
 def invoice_dict(row): return dict(zip(('id','reference','vendor','recipient','amount_cents','due_date','text','status','created_at','source'),row))
 def get_invoice(ident,owner,connect,pg):
