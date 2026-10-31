@@ -2,6 +2,8 @@
 
 Private synthetic invoices, a read-only Muse copilot, and a Go gateway that separates financial intelligence from payment authority. The application has no bank integrations and never moves real money.
 
+For a reproducible paired risk-classification experiment using Muse Spark and Muse Wonder, see [Model comparison](MODEL-COMPARISON.md). It records correctness, abstentions, latency and token usage without changing the production gateway.
+
 The **Security frontier** workspace adds opt-in shared synthetic threat signatures, real WebAuthn verification for simulated invoice holds, and model-proposed additive policies with a 1,024-fixture benchmark and explicit promotion/rollback. See [Security frontier](SECURITY-FRONTIER.md) for setup, a demo walkthrough and limitations.
 
 The **Visual invoice guard** includes original/enhanced/overlay comparison, first-page PDF visibility heuristics, optional evidence-bound Muse explanations, and one-click synthetic fixtures. See [Visual inspection](VISUAL-INSPECTION.md) for thresholds, privacy limits and the reproducible 15-document benchmark.

@@ -1,5 +1,7 @@
 # Meta model usage in AgentShield
 
+An operator-only Spark-versus-Wonder comparison uses the same risk analyzer with an explicit per-call model override. It leaves `META_MODEL` and payment behavior unchanged. See [Model comparison](MODEL-COMPARISON.md) for the synthetic dataset, run command and limits.
+
 Invoice briefs add an explicit `visual_clip_script` Muse call: exactly three bounded captions with validated evidence references, cached per document and sharing inspection quotas. The browser renders an 18-second animation and optional WebM export with an original locally synthesized music bed. Selectable energetic narration uses a local browser voice, not a Meta audio model. There is no claim of Meta-generated video/audio. Gmail scripts remain blocked. See [Visual inspection](VISUAL-INSPECTION.md).
 
 Visual evidence explanations are explicit, bounded Muse calls supplied only with numeric first-page observations and fixed check metadata. References are validated against finding IDs; completed responses are cached. Gmail imports cannot use this call. Contrast enhancement and visibility heuristics run locally without models. See [Visual inspection](VISUAL-INSPECTION.md).
