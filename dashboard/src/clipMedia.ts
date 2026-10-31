@@ -18,7 +18,7 @@ type Region={id:string;box:{x:number;y:number;w:number;h:number}};
 const names=['See the evidence','Understand the signal','Choose your next step'];
 function rounded(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number,color:string){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
 function wrap(ctx:CanvasRenderingContext2D,text:string,x:number,y:number,width:number,lineHeight:number){let line='';for(const word of text.split(/\s+/)){const next=line?line+' '+word:word;if(ctx.measureText(next).width>width&&line){ctx.fillText(line,x,y);y+=lineHeight;line=word}else line=next}ctx.fillText(line,x,y)}
-export function drawBrief(canvas:HTMLCanvasElement,image:HTMLImageElement|null,time:number,playing:boolean,caption:string,ids:string[],findings:Region[],music:boolean){
+export function drawBrief(canvas:HTMLCanvasElement,image:HTMLImageElement|null,time:number,playing:boolean,caption:string,ids:string[],findings:Region[],music:boolean,museScript=true){
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const t=reduced?0:time,scene=Math.min(2,Math.floor(time/6)),phase=(time%6)/6;
@@ -53,6 +53,6 @@ export function drawBrief(canvas:HTMLCanvasElement,image:HTMLImageElement|null,t
  ctx.restore();
  ctx.fillStyle='#f2ecff';ctx.font='12px sans-serif';ctx.fillText('Observations are not proof of fraud or payment approval.',373,452);
  for(let i=0;i<3;i++){rounded(ctx,32+i*304,481,290,6,3,'#ffffff33');const progress=Math.max(0,Math.min(1,(time-i*6)/6));if(progress)rounded(ctx,32+i*304,481,290*progress,6,3,palettes[i][0])}
- ctx.fillStyle='#f0eaff';ctx.font='11px sans-serif';ctx.fillText('MUSE SCRIPT / AGENTSHIELD MOTION',32,517);ctx.font='bold 13px sans-serif';ctx.fillText(`${Math.floor(time).toString().padStart(2,'0')} / 18s`,844,517);
+ ctx.fillStyle='#f0eaff';ctx.font='11px sans-serif';ctx.fillText(museScript?'MUSE SCRIPT / AGENTSHIELD MOTION':'LOCAL EVIDENCE / AGENTSHIELD MOTION',32,517);ctx.font='bold 13px sans-serif';ctx.fillText(`${Math.floor(time).toString().padStart(2,'0')} / 18s`,844,517);
  if(music){for(let i=0;i<13;i++){const h=playing&&!reduced?4+Math.abs(Math.sin(t*5+i*.65))*15:4;rounded(ctx,648+i*7,516-h,3,h,2,secondary)}ctx.font='9px sans-serif';ctx.fillText('SOUNDTRACK',749,517)}
 }
