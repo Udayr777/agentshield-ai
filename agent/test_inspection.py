@@ -28,6 +28,14 @@ class InspectionTests(unittest.TestCase):
         out=io.BytesIO();Image.new('RGB',(100,100),'white').save(out,format='PNG')
         result=inspection.inspect('data:image/png;base64,'+base64.b64encode(out.getvalue()).decode())
         self.assertEqual(result['status'],'not_measured');self.assertTrue(result['enhanced_preview']);self.assertEqual(inspection.inspect('')['status'],'not_measured')
+    def test_configurable_budget_can_be_disabled_or_restored(self):
+        now=int(__import__('time').time())
+        with app.connect() as db:
+            db.execute('INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',('budget-test',self.owner,'{}',now))
+            with patch.dict(os.environ,{'EXPLANATION_ACCOUNT_HOURLY_LIMIT':'0','EXPLANATION_GLOBAL_HOURLY_LIMIT':'0'}):inspection.generation_budget(db,False,self.owner,now)
+            with patch.dict(os.environ,{'EXPLANATION_ACCOUNT_HOURLY_LIMIT':'1','EXPLANATION_GLOBAL_HOURLY_LIMIT':'0'}):
+                with self.assertRaises(ws.APIError):inspection.generation_budget(db,False,self.owner,now)
+            with patch.dict(os.environ,{'EXPLANATION_ACCOUNT_HOURLY_LIMIT':'100','EXPLANATION_GLOBAL_HOURLY_LIMIT':'500'}):inspection.generation_budget(db,False,self.owner,now)
     def test_clip_script_is_bounded_private_and_cached(self):
         doc=self.upload('white_text');gmail=self.upload('white_text','gmail')
         result={'scenes':[{'caption':'Low contrast text was observed in the first page.','evidence_ids':['e1']},{'caption':'These observations do not establish whether this invoice is authentic.','evidence_ids':[]},{'caption':'Inspect highlighted regions and manually verify fields and recipient.','evidence_ids':[]}]}

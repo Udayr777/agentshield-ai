@@ -3,6 +3,19 @@ import base64,io,math
 from PIL import Image,ImageOps,ImageEnhance,ImageStat
 
 VERSION='visibility-v1'
+def generation_budget(db,pg,owner,now):
+    import os,workspace as ws
+    def limit(name,default):
+        try:value=int(os.getenv(name,str(default)))
+        except ValueError:raise ws.APIError(503,'Invalid explanation limit configuration.') from None
+        if value<0:raise ws.APIError(503,'Explanation limits must be nonnegative; zero disables the limit.')
+        return value
+    account=limit('EXPLANATION_ACCOUNT_HOURLY_LIMIT',100)
+    deployment=limit('EXPLANATION_GLOBAL_HOURLY_LIMIT',500)
+    account_count=ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0] if account else 0
+    total=ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE created_at>?',(now-3600,),pg).fetchone()[0] if deployment else 0
+    if (account and account_count>=account) or (deployment and total>=deployment):
+        raise ws.APIError(429,f'Configured Muse generation limit reached ({account or "unlimited"}/account/hour, {deployment or "unlimited"}/deployment/hour). Replay remains available. This app limit is separate from Meta credits.')
 def load_fixture(data,owner,connect,pg):
     from pathlib import Path
     import visual,workspace as ws
@@ -85,7 +98,7 @@ def explain(data,owner,connect,pg):
             cached=json.loads(row[0])
             if cached.get('status')=='complete':return cached
             raise ws.APIError(409,'An explanation was already attempted for this document. Inspect local evidence; no automatic retry is made.')
-        if ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0]>=5 or db.execute('SELECT COUNT(*) FROM inspection_explanations WHERE created_at>'+str(now-3600)).fetchone()[0]>=20:raise ws.APIError(429,'Explanation budget reached: five per account and twenty per deployment per hour.')
+        generation_budget(db,pg,owner,now)
         ws.query(db,'INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',(doc['id'],owner,json.dumps({'status':'pending'}),now),pg)
     schema={'type':'object','properties':{'summary':{'type':'string'},'evidence_ids':{'type':'array','items':{'type':'string'}},'next_step':{'type':'string'}},'required':['summary','evidence_ids','next_step'],'additionalProperties':False}
     try:
@@ -123,7 +136,7 @@ def clip(data,owner,connect,pg):
             result=json.loads(row[0])
             if result.get('status')=='complete':return result
             raise ws.APIError(409,'Clip scripting was already attempted. No automatic retry is made.')
-        if ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0]>=5 or ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20:raise ws.APIError(429,'New Muse generation limit reached: five per account and twenty per deployment in a rolling hour. Saved clips can still replay without credits. Try new generation after the window expires.')
+        generation_budget(db,pg,owner,now)
         ws.query(db,'INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',(cache_id,owner,json.dumps({'status':'pending'}),now),pg)
     scene={'type':'object','properties':{'caption':{'type':'string'},'evidence_ids':{'type':'array','items':{'type':'string'}}},'required':['caption','evidence_ids'],'additionalProperties':False}
     schema={'type':'object','properties':{'scenes':{'type':'array','items':scene,'minItems':3,'maxItems':3}},'required':['scenes'],'additionalProperties':False}
