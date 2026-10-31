@@ -5,7 +5,7 @@ import secrets, hmac, hashlib
 from urllib.parse import urlparse, parse_qs
 import workspace as ws
 import visual, lifecycle as lc
-import ledger, judge, helpdesk
+import ledger, judge, helpdesk, council
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -38,7 +38,7 @@ def init():
             db.execute('CREATE TABLE IF NOT EXISTS approvals (token TEXT PRIMARY KEY,recipient TEXT NOT NULL,amount_cents BIGINT NOT NULL,expires_at BIGINT NOT NULL,used INTEGER NOT NULL DEFAULT 0)')
         ws.migrate(db,bool(PG))
         visual.migrate(db)
-        ledger.migrate(db);judge.migrate(db)
+        ledger.migrate(db);judge.migrate(db);council.migrate(db)
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
@@ -59,6 +59,12 @@ def audit(data,owner=None):
             check('replay','Single use + invoice idempotency',bool(cap and cap[3]==0 and (not p.get('invoice_id') or inv and inv[0]=='pending')),'Used approvals and already simulated invoices cannot execute again.'),
             {'id':'audit','label':'Atomic durable audit','status':'pass','detail':'This record is returned only after the transaction commits.'}
         ]
+        council_gate=council.gate(db,bool(PG),owner_key,p)
+        if council_gate['required']:
+            checks[5]['label']='Muse analysis + review council'
+            checks[5]['detail']+=' · '+council_gate['reason']
+            if not council_gate['satisfied']:
+                checks[5]['status']='fail';data['decision']='deny';data['reason']=council_gate['reason']
         layout=judge.check(db,bool(PG),owner_key,p)
         checks[0]['label']='Identity + private record scope'
         checks[0]['status']='pass' if owner and (not p.get('invoice_id') or inv is not None) else 'fail'
@@ -124,6 +130,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/threats':return self.reply(200,lc.gallery(connect,bool(PG)))
             if path.path=='/arena/state':return self.reply(200,lc.state(params.get('id',[''])[0],connect,bool(PG)))
             user=self.user()
+            if path.path=='/council':return self.reply(200,council.latest(user['id'],params.get('invoice_id',[''])[0],connect,bool(PG)))
             if path.path=='/help':return self.reply(200,helpdesk.TOPICS)
             if path.path=='/ledger':return self.reply(200,ledger.inspect(user['id'],connect,bool(PG)))
             if path.path=='/documents':return self.reply(200,visual.get_document(params['id'][0],user['id'],connect,bool(PG)) if 'id' in params else visual.list_documents(user['id'],connect,bool(PG)))
@@ -156,6 +163,8 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
+            if self.path=='/council/review':return self.reply(200,council.review(data,owner,connect,bool(PG)))
+            if self.path=='/council/standard':return self.reply(200,council.disable(data,owner,connect,bool(PG)))
             if self.path=='/judge-pack':
                 with LOCK:return self.reply(200,judge.load(owner,connect,bool(PG)))
             if self.path=='/help/chat':return self.reply(200,helpdesk.chat(data,owner))
@@ -177,7 +186,13 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/chat':
                 data['conversation_id']=self.chat_scope()
                 return self.reply(200,ws.chat(data,owner,connect,bool(PG)))
-            if self.path=='/analyze': return self.reply(200,analyze(data))
+            if self.path=='/analyze':
+                result=analyze(data)
+                with connect() as db:gate=council.gate(db,bool(PG),owner,data)
+                if gate['required']:
+                    result['council']=gate
+                    if not gate['satisfied']:result.update(risk='unknown',reason=gate['reason'])
+                return self.reply(200,result)
             if self.path=='/prepare': return self.reply(200,prepare(data,connect,PG,owner))
             if self.path=='/audit':
                 result=audit(data,owner);return self.reply(200,{'saved':True,'decision':result.get('decision'),'reason':result.get('reason'),'checks':result.get('checks')})

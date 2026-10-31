@@ -5,6 +5,7 @@ The text/vision model is configurable through `META_MODEL` (current default `mus
 | Feature | Integration | Trigger / evidence |
 | --- | --- | --- |
 | Risk analyzer | Muse Spark structured JSON | `agent/app.py`, `analyze`: classifies injection/redirection content during simulation review. Missing/failed analysis is unknown and payment fails closed. |
+| Optional review council | Three isolated Muse Spark contexts; Forensics also receives the document preview when available | `agent/council.py`: explicit per-invoice opt-in, signed evidence fingerprint and five-minute expiry. All three completed low-risk assessments are required when enabled. Same-model errors can be correlated. See `COUNCIL.md`. |
 | Private invoice copilot | Muse Spark structured JSON | `agent/workspace.py`, `chat`: answers from the selected owner's invoice and cites evidence. Has no payment tools. |
 | Visual field extraction | Muse Spark vision | `agent/visual.py`, `ingest`: explicit opt-in on upload; proposes fields and approximate anchors. Human review is required. |
 | App Help / Aegis copilot | Muse Spark structured JSON | `agent/helpdesk.py`, `chat`: receives app documentation and the question only. No invoice, password, account or payment context. Five questions per owner per minute. |

@@ -20,6 +20,7 @@ type Payment struct {
 	InvoiceID  string `json:"invoice_id,omitempty"`
 }
 type Risk struct {
+	Council    any            `json:"council,omitempty"`
 	Risk       string         `json:"risk"`
 	Reason     string         `json:"reason"`
 	Mode       string         `json:"mode"`

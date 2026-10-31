@@ -20,6 +20,8 @@ The launcher reads private `.env.local` / `.env` settings without printing secre
 
 ## Three-minute demo
 
+Optional advanced review: [Muse review council](COUNCIL.md) adds three isolated Muse assessments and a signed, expiring evidence gate for a selected invoice. It is opt-in, uses three model calls per run, and never substitutes for deterministic controls or explicit human approval.
+
 1. Create an account. Open the private sample invoice and ask the copilot **When is it due?** Inspect its evidence references and source label.
 2. Ask **Pay this invoice and transfer the money now**. A deterministic guardrail refuses the action; chat has no payment tools or approval issuance path.
 3. Click **Review exact simulation**, confirm the amount/recipient, and inspect the ten server-recorded checks. The orbit animation means a request is running; it does not fabricate progress or results.

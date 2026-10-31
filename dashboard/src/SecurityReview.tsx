@@ -1,5 +1,7 @@
 import React from 'react';
-export type Check={id:string;label:string;status:string;detail:string};
+export type Box={x:number;y:number;w:number;h:number};
+export type LayoutEvidence={template_source:string;observed_source:string;expected:Box[];observed:Box[];deviations:number[];threshold:number;routing_text_matches:boolean};
+export type Check={id:string;label:string;status:string;detail:string;evidence?:LayoutEvidence};
 export type Receipt={id:string;decision:string;reason:string;checks:Check[];analysis:{mode:string;risk:string;reason:string};created_at:string;payment:{invoice_id?:string;recipient:string;amount_cents:number}};
 const labels=['Identity + private record scope','Visual Template Anchor Binding','Typed request boundary','Payment limit','Trusted recipient','Invoice injection analysis','Exact approval binding','Approval expiry','Single use + invoice idempotency','Atomic durable audit'];
 export default function SecurityReview({receipt,busy}:{receipt:Receipt|null;busy:boolean}){

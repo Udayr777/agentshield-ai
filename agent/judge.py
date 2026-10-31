@@ -44,5 +44,5 @@ def check(db,pg,owner,payment):
     anomaly=not expected or max(deviations,default=1)>.035
     text=doc.get('fields',{}).get('invoice_text','')
     details_ok='Routing details: DEMO-NOT-A-BANK' in text
-    result.update(status='fail' if anomaly or not details_ok else 'pass',detail=f'Trusted synthetic Acme template vs {source}; max normalized center deviation {max(deviations,default=1):.4f}, tolerance 0.035. '+('Layout/routing anomaly: review required.' if anomaly or not details_ok else 'Banking anchors and synthetic routing text match.'))
+    result.update(status='fail' if anomaly or not details_ok else 'pass',detail=f'Trusted synthetic Acme template vs {source}; max normalized center deviation {max(deviations,default=1):.4f}, tolerance 0.035. '+('Layout/routing anomaly: review required.' if anomaly or not details_ok else 'Banking anchors and synthetic routing text match.'),evidence={'template_source':'Trusted synthetic Acme PDF geometry','observed_source':source,'expected':expected,'observed':banking,'deviations':deviations,'threshold':0.035,'routing_text_matches':details_ok})
     return result
