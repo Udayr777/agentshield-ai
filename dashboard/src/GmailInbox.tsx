@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 type Status={configured:boolean;connected:boolean;mailbox:string;redirect_uri:string;imports:{document_id:string;filename:string;invoice_id:string}[]};
 type Mail={id:string;subject:string;from:string;date:string};type Attachment={part_id:string;filename:string;mime:string;size:number};
-async function api(path:string,body?:unknown){const r=await fetch('/api'+path,body===undefined?undefined:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(data.error||'Gmail unavailable');return data}
+import {requestJson as api} from './requestJson';
 export default function GmailInbox(){const[status,setStatus]=useState<Status|null>(null),[messages,setMessages]=useState<Mail[]>([]),[selected,setSelected]=useState<Mail|null>(null),[files,setFiles]=useState<Attachment[]>([]),[query,setQuery]=useState('newer_than:180d has:attachment (filename:pdf OR filename:png OR filename:jpg OR filename:jpeg) (invoice OR bill OR receipt)'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(location.hash==='#gmail=connected'?'Google authorization completed. Your inbox is not searched until you click Search.':location.hash==='#gmail=error'?'Google authorization did not complete. Check that you are a test user and try again.':''),[consent,setConsent]=useState(false);
  async function refresh(){setStatus(await api('/gmail/status'))}
  useEffect(()=>{let live=true;api('/gmail/status').then(d=>{if(live)setStatus(d)}).catch(e=>{if(live)setError(String(e))});return()=>{live=false}},[]);
