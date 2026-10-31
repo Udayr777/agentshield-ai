@@ -118,6 +118,8 @@ Upload/review with Muse and SAM, invoice-bound chaos, exploded audit nodes, geom
 
 ## Cloud deployment
 
+Optional [Gmail invoice import](GMAIL.md) uses Google read-only OAuth and explicitly selected attachments. Gmail imports remain local-only: external model processing and payment simulation are blocked for that source. Google client credentials and token encryption keys are private environment settings; no Gmail connection is enabled just by deploying the repository.
+
 See [DEPLOYMENT.md](DEPLOYMENT.md). The root Dockerfile builds React and Go, then runs the gateway and a local-only Python service in one Render Free web service. Neon supplies PostgreSQL. The blueprint declares no paid service. Never commit `.env`, keys, signing secrets, database URLs, local databases or private uploads.
 
 Neon persistence and authenticated HTTP flows have been tested separately. Docker image execution and the public Render deployment still require verification. A successful TypeScript build is not proof of a successful cloud deployment.

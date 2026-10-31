@@ -1,5 +1,7 @@
 # Meta model usage in AgentShield
 
+Gmail exception: documents imported by the read-only Gmail connector and their confirmed invoices remain local-only. Server guards block their risk-model calls, Muse chat, council review, SAM refinement and public sharing until suitable provider data-use terms are reviewed. These records are not eligible for payment simulation. See `GMAIL.md`.
+
 The text/vision model is configurable through `META_MODEL` (current default `muse-spark-1.3`). Live calls require `ANALYZER_MODE=meta` and a private Meta API key. Credentials stay on the Python service, never in the React app or extension.
 
 | Feature | Integration | Trigger / evidence |

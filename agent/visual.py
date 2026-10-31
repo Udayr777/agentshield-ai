@@ -25,7 +25,7 @@ def proposal(text,anchors):
     date=re.search(r'\b20\d{2}-\d{2}-\d{2}\b',text)
     ref=re.search(r'\b(?:INV[-\s]+|INV(?=\d))[A-Z0-9][\w-]*',text,re.I)
     return {'reference':ref.group(0) if ref else '', 'vendor':text.splitlines()[0][:120] if text else '', 'amount_cents':round(float(total[-1].replace(',',''))*100) if total else 0,'due_date':date.group(0) if date else '', 'recipient_hint':'','invoice_text':text[:8000],'anchors':anchors}
-def ingest(data,owner,connect,pg):
+def ingest(data,owner,connect,pg,source='upload'):
     mime=data.get('mime');name=str(data.get('filename','document'))[:120]
     try:raw=base64.b64decode(data.get('data',''),validate=True)
     except Exception:raise ws.APIError(400,'Invalid file encoding.')
@@ -73,6 +73,7 @@ def ingest(data,owner,connect,pg):
     except Exception:raise ws.APIError(400,'File cannot be safely decoded. Choose a valid PDF or image.')
     fields=proposal(text,anchors);mode='pdf_text' if mime=='application/pdf' else 'manual'
     if data.get('use_muse'):
+        if source=='gmail':raise ws.APIError(403,'Gmail imports cannot be sent to Meta in this version.')
         if os.getenv('ANALYZER_MODE')!='meta':raise ws.APIError(400,'Live extraction requires meta mode. Turn off Muse extraction for local processing.')
         box={'type':'object','properties':{'label':{'type':'string','enum':['merchant','banking','total','instructions']},**{k:{'type':'number'} for k in ('x','y','w','h')}},'required':['label','x','y','w','h'],'additionalProperties':False}
         props={k:{'type':'string'} for k in ('reference','vendor','due_date','recipient_hint','invoice_text')};props['amount_cents']={'type':'integer'};props['anchors']={'type':'array','items':box}
@@ -90,6 +91,7 @@ def ingest(data,owner,connect,pg):
         except Exception:raise ws.APIError(503,'Muse returned invalid extraction fields. No invoice was created.')
     ident=uuid.uuid4().hex
     payload={'id':ident,'filename':Path(name).name,'mime':mime,'sha256':hashlib.sha256(raw).hexdigest(),'preview':preview,'width':width,'height':height,'page_count':pages,'preview_page':1,'hidden_text_detected':hidden,'extraction_mode':mode,'fields':fields,'anchors':fields.get('anchors',anchors),'sam':{'status':'not_run','model':'sam-3.1'},'requires_review':True,'privacy':'Original images and text remain private; public sharing is geometry-only.'}
+    payload['source']=source
     with connect() as db:ws.query(db,'INSERT INTO documents (id,owner_id,filename,payload,created_at) VALUES (?,?,?,?,?)',(ident,owner,Path(name).name,json.dumps(payload),int(time.time())),pg)
     return payload
 def get_document(ident,owner,connect,pg):
@@ -102,8 +104,10 @@ def list_documents(owner,connect,pg):
 def confirm(data,owner,connect,pg):
     doc=get_document(data.get('document_id'),owner,connect,pg)
     if doc['invoice_id']:raise ws.APIError(409,'This document already has a confirmed invoice.')
-    inv=ws.create_invoice(data.get('fields',{}),owner,connect,pg)
-    with connect() as db:ws.query(db,"UPDATE documents SET invoice_id=? WHERE id=? AND owner_id=?",(inv['id'],doc['id'],owner),pg)
+    inv=ws.create_invoice(data.get('fields',{}),owner,connect,pg,origin='gmail' if doc.get('source')=='gmail' else 'manual')
+    with connect() as db:
+        ws.query(db,"UPDATE documents SET invoice_id=? WHERE id=? AND owner_id=?",(inv['id'],doc['id'],owner),pg)
+    if doc.get('source')=='gmail':inv['source']='gmail'
     return inv
 
 def parse_sam(text):
@@ -117,6 +121,7 @@ def parse_sam(text):
     return boxes[:50]
 def segment(data,owner,connect,pg):
     doc=get_document(data.get('document_id'),owner,connect,pg)
+    if doc.get('source')=='gmail':raise ws.APIError(403,'Gmail imports are local-only; external model processing is disabled pending provider data-use review.')
     if not doc['preview']:raise ws.APIError(400,'SAM requires an image preview.')
     if os.getenv('ANALYZER_MODE')!='meta':raise ws.APIError(400,'SAM requires live Meta mode; no mock SAM boxes are generated.')
     anchors=doc['anchors'][:8]

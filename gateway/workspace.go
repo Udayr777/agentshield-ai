@@ -118,6 +118,9 @@ func boundary(next http.Handler) http.Handler {
 		if r.URL.Path == "/api/chat" {
 			max = 20
 		}
+		if strings.HasPrefix(r.URL.Path, "/api/gmail/") {
+			max = 20
+		}
 		if r.URL.Path == "/api/arena/submit" {
 			max = 10
 		}
@@ -233,6 +236,7 @@ func authHandler(path string) http.HandlerFunc {
 	}
 }
 func workspaceRoutes(mux *http.ServeMux) {
+	gmailRoutes(mux)
 	for _, path := range []string{"/judge-pack", "/help", "/help/chat", "/ledger", "/ledger/verify", "/council", "/council/review", "/council/standard"} {
 		mux.HandleFunc("/api"+path, requireSession(proxyAgent(path)))
 	}

@@ -61,6 +61,8 @@ def review(data,owner,connect,pg):
         with LOCK,connect() as db:
             if pg:db.execute('SELECT pg_advisory_xact_lock(4815162343)')
             values,fingerprint,image=facts(db,pg,owner,ident)
+            from gmail_link import is_gmail_invoice
+            if is_gmail_invoice(db,pg,owner,ident):raise ws.APIError(403,'Gmail imports are local-only. Muse council processing is disabled for these documents.')
             recent=ws.query(db,'SELECT created_at FROM council_runs WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchall()
             total=ws.query(db,'SELECT COUNT(*) FROM council_runs WHERE created_at>?',(now-3600,),pg).fetchone()[0]
             if len(recent)>=3 or any(r[0]>now-60 for r in recent) or total>=10:raise ws.APIError(429,'Council budget reached: one per minute, three per account/hour, ten globally/hour. Failed runs count too.')

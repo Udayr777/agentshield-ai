@@ -3,6 +3,9 @@
 !.env.example
 .neon
 .ledger-key
+.gmail-oauth-client.json
+client_secret*.json
+.gmail-token-key
 .venv/
 .service-token
 model-usage.jsonl

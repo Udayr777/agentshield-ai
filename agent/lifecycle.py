@@ -14,6 +14,7 @@ def share(data,owner,connect,pg):
     vector=data.get('vector')
     if vector not in VECTORS:raise ws.APIError(400,'Choose a supported attack category.')
     doc=visual.get_document(data.get('document_id'),owner,connect,pg)
+    if doc.get('source')=='gmail':raise ws.APIError(403,'Gmail-derived documents cannot be contributed to the public gallery.')
     regions=[b for b in doc.get('sam',{}).get('boxes',[]) if b.get('label')=='instructions'] or doc['anchors']
     geometry=[{**visual.normalize_box(b),'label':'attack_region'} for b in regions if b.get('label')=='instructions']
     if not geometry:raise ws.APIError(400,'No suspicious region geometry is present; nothing was shared.')

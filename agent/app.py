@@ -5,7 +5,7 @@ import secrets, hmac, hashlib
 from urllib.parse import urlparse, parse_qs
 import workspace as ws
 import visual, lifecycle as lc
-import ledger, judge, helpdesk, council
+import ledger, judge, helpdesk, council, gmail_link as gmail
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -38,7 +38,7 @@ def init():
             db.execute('CREATE TABLE IF NOT EXISTS approvals (token TEXT PRIMARY KEY,recipient TEXT NOT NULL,amount_cents BIGINT NOT NULL,expires_at BIGINT NOT NULL,used INTEGER NOT NULL DEFAULT 0)')
         ws.migrate(db,bool(PG))
         visual.migrate(db)
-        ledger.migrate(db);judge.migrate(db);council.migrate(db)
+        ledger.migrate(db);judge.migrate(db);council.migrate(db);gmail.migrate(db)
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
@@ -60,6 +60,8 @@ def audit(data,owner=None):
             {'id':'audit','label':'Atomic durable audit','status':'pass','detail':'This record is returned only after the transaction commits.'}
         ]
         council_gate=council.gate(db,bool(PG),owner_key,p)
+        if gmail.is_gmail_invoice(db,bool(PG),owner_key,p.get('invoice_id','')):
+            checks[5]['status']='unknown';checks[5]['detail']='Gmail imports are local-only; no external risk assessment or payment authorization.';data['decision']='deny';data['reason']=checks[5]['detail']
         if council_gate['required']:
             checks[5]['label']='Muse analysis + review council'
             checks[5]['detail']+=' · '+council_gate['reason']
@@ -129,7 +131,9 @@ class Handler(BaseHTTPRequestHandler):
             self.internal();path=urlparse(self.path);params=parse_qs(path.query)
             if path.path=='/threats':return self.reply(200,lc.gallery(connect,bool(PG)))
             if path.path=='/arena/state':return self.reply(200,lc.state(params.get('id',[''])[0],connect,bool(PG)))
+            if path.path=='/gmail/callback':return self.reply(200,gmail.callback({k:v[0] for k,v in params.items()},connect,bool(PG)))
             user=self.user()
+            if path.path=='/gmail/status':return self.reply(200,gmail.status(user['id'],connect,bool(PG)))
             if path.path=='/council':return self.reply(200,council.latest(user['id'],params.get('invoice_id',[''])[0],connect,bool(PG)))
             if path.path=='/help':return self.reply(200,helpdesk.TOPICS)
             if path.path=='/ledger':return self.reply(200,ledger.inspect(user['id'],connect,bool(PG)))
@@ -163,6 +167,12 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
+            if self.path=='/gmail/connect':return self.reply(200,gmail.begin(owner,self.headers.get('Authorization','').removeprefix('Bearer '),connect,bool(PG)))
+            if self.path=='/gmail/search':return self.reply(200,gmail.search(data,owner,connect,bool(PG)))
+            if self.path=='/gmail/attachments':return self.reply(200,gmail.attachments(data,owner,connect,bool(PG)))
+            if self.path=='/gmail/import':return self.reply(200,gmail.import_selected(data,owner,connect,bool(PG)))
+            if self.path=='/gmail/disconnect':return self.reply(200,gmail.disconnect(owner,connect,bool(PG)))
+            if self.path=='/gmail/delete-draft':return self.reply(200,gmail.delete_draft(data,owner,connect,bool(PG)))
             if self.path=='/council/review':return self.reply(200,council.review(data,owner,connect,bool(PG)))
             if self.path=='/council/standard':return self.reply(200,council.disable(data,owner,connect,bool(PG)))
             if self.path=='/judge-pack':
@@ -187,6 +197,8 @@ class Handler(BaseHTTPRequestHandler):
                 data['conversation_id']=self.chat_scope()
                 return self.reply(200,ws.chat(data,owner,connect,bool(PG)))
             if self.path=='/analyze':
+                with connect() as db:private_source=gmail.is_gmail_invoice(db,bool(PG),owner,data.get('invoice_id',''))
+                if private_source:return self.reply(200,{'risk':'unknown','mode':'local-only','reason':'Gmail imports are local-only. External model analysis is disabled; no payment authorized.'})
                 result=analyze(data)
                 with connect() as db:gate=council.gate(db,bool(PG),owner,data)
                 if gate['required']:

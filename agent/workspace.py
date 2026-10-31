@@ -10,7 +10,7 @@ def query(db,sql,args=(),pg=False): return db.execute(sql.replace('?', '%s') if 
 def migrate(db,pg):
     for sql in Path(__file__).with_name('workspace.sql').read_text().split(';'):
         if sql.strip(): db.execute(sql)
-    for table,columns in {'messages':{'conversation_id':"TEXT NOT NULL DEFAULT ''"},'audit':{'owner_id':"TEXT NOT NULL DEFAULT ''",'recorded_at':"BIGINT NOT NULL DEFAULT 0"},'approvals':{'owner_id':"TEXT NOT NULL DEFAULT ''",'invoice_id':"TEXT NOT NULL DEFAULT ''"}}.items():
+    for table,columns in {'invoices':{'origin':"TEXT NOT NULL DEFAULT 'manual'"},'messages':{'conversation_id':"TEXT NOT NULL DEFAULT ''"},'audit':{'owner_id':"TEXT NOT NULL DEFAULT ''",'recorded_at':"BIGINT NOT NULL DEFAULT 0"},'approvals':{'owner_id':"TEXT NOT NULL DEFAULT ''",'invoice_id':"TEXT NOT NULL DEFAULT ''"}}.items():
         if pg:
             for column,kind in columns.items(): db.execute(f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {kind}')
         else:
@@ -55,8 +55,8 @@ def logout(token,connect,pg):
         if row:query(db,'DELETE FROM extension_tokens WHERE owner_id=?',(row[0],),pg)
         query(db,'DELETE FROM sessions WHERE token_hash=?',(digest,),pg)
 
-FIELDS='id,reference,vendor,recipient,amount_cents,due_date,invoice_text,status,created_at'
-def invoice_dict(row): return dict(zip(('id','reference','vendor','recipient','amount_cents','due_date','text','status','created_at'),row))
+FIELDS='id,reference,vendor,recipient,amount_cents,due_date,invoice_text,status,created_at,origin'
+def invoice_dict(row): return dict(zip(('id','reference','vendor','recipient','amount_cents','due_date','text','status','created_at','source'),row))
 def get_invoice(ident,owner,connect,pg):
     with connect() as db: row=query(db,'SELECT '+FIELDS+' FROM invoices WHERE id=? AND owner_id=?',(ident,owner),pg).fetchone()
     if not row: raise APIError(404,'Invoice not found in your workspace.')
@@ -64,7 +64,7 @@ def get_invoice(ident,owner,connect,pg):
 def list_invoices(owner,connect,pg):
     with connect() as db: rows=query(db,'SELECT '+FIELDS+' FROM invoices WHERE owner_id=? ORDER BY created_at DESC,id LIMIT 100',(owner,),pg).fetchall()
     return [invoice_dict(row) for row in rows]
-def create_invoice(data,owner,connect,pg):
+def create_invoice(data,owner,connect,pg,origin='manual'):
     amount=data.get('amount_cents'); text=data.get('text','')
     if type(amount) is not int or not 1<=amount<=10000000 or not isinstance(text,str) or not 1<=len(text)<=8000: raise APIError(400,'Use integer cents and invoice text of 1–8000 characters.')
     vals=[str(data.get(k,'')).strip() for k in ('reference','vendor','recipient','due_date')]
@@ -72,7 +72,7 @@ def create_invoice(data,owner,connect,pg):
     try: datetime.date.fromisoformat(vals[3])
     except ValueError: raise APIError(400,'Use a YYYY-MM-DD due date.')
     ident=uuid.uuid4().hex
-    with connect() as db: query(db,'INSERT INTO invoices (id,owner_id,reference,vendor,recipient,amount_cents,due_date,invoice_text,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)',(ident,owner,vals[0],vals[1],vals[2],amount,vals[3],text,'pending',int(time.time())),pg)
+    with connect() as db: query(db,'INSERT INTO invoices (id,owner_id,reference,vendor,recipient,amount_cents,due_date,invoice_text,status,created_at,origin) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(ident,owner,vals[0],vals[1],vals[2],amount,vals[3],text,'pending',int(time.time()),origin),pg)
     return get_invoice(ident,owner,connect,pg)
 def invoice_prepare(data,owner,connect,pg):
     inv=get_invoice(data.get('invoice_id'),owner,connect,pg)
@@ -91,6 +91,10 @@ def chat(data,owner,connect,pg):
     if not isinstance(question,str) or not 1<=len(question.strip())<=2000: raise APIError(400,'Ask a question of 1–2000 characters.')
     evidence={'invoice:reference':inv['reference'],'invoice:amount':f"USD {inv['amount_cents']/100:.2f}",'invoice:vendor':inv['vendor'],'invoice:recipient':inv['recipient'],'invoice:due':inv['due_date'],'invoice:status':inv['status'],'invoice:text':inv['text']}
     mode=os.getenv('ANALYZER_MODE','mock')
+    if mode=='meta':
+        from gmail_link import is_gmail_invoice
+        with connect() as db:private_source=is_gmail_invoice(db,pg,owner,inv['id'])
+        if private_source:raise APIError(403,'Gmail imports are local-only. Muse chat is disabled until provider data-use terms are verified.')
     action=bool(re.search(r'\b(pay|transfer|execute|approve|send money|change.{0,20}recipient|reveal.{0,20}(key|password))\b',question.lower()))
     if action:
         answer='I can explain this invoice, but I cannot approve, modify or execute payments, reveal secrets, or access other users’ records. Use the explicit simulation approval control for a payment review.';citations=['invoice:status'];source='policy';guard='blocked_action'
