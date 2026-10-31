@@ -193,6 +193,7 @@ class Handler(BaseHTTPRequestHandler):
             data=json.loads(self.rfile.read(length))
             if not isinstance(data,dict):raise ws.APIError(400,'JSON object required.')
             if self.path in ('/register','/login'):return self.reply(200,ws.auth(data,self.path=='/register',connect,bool(PG)))
+            if self.path=='/public/help':return self.reply(200,helpdesk.public_chat(data))
             if self.path=='/extension/import':return self.reply(200,lc.extension_import(data,connect,bool(PG)))
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))

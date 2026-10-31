@@ -6,6 +6,13 @@ import (
 )
 
 func lifecycleRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/api/public/help", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.WriteHeader(405)
+			return
+		}
+		proxyAgent("/public/help")(w, r)
+	})
 	mux.HandleFunc("/api/invoices/chaos", requireSession(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)

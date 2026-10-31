@@ -133,3 +133,6 @@ Neon persistence and authenticated HTTP flows have been tested separately. Docke
 ## Submission and scope
 
 This is a synthetic finance demonstration: no real bank integrations or transfers, production certification, automatic inbox crawling, guaranteed PII redaction, or universal injection detection. Models provide evidence, not payment authorization. Browser extension installation is explicit. Deployment/publication status must be verified against actual running services. See `MODEL-USAGE.md` for model boundaries and `VALIDATION.md` for historical test observations.
+
+## Public feature guide
+Before sign-in, the landing page groups capabilities under Inspect, Explain, Defend and Verify, includes a practical FAQ, and offers app-only Aegis help. The anonymous `/api/public/help` endpoint forwards only documentation and a validated question (600 characters maximum), never private invoice/account context. Live public help has per-process limits of three requests/minute and twenty/hour, counting failures; documentation fallback stays available. These reset on process restart and are not a distributed production quota. Authenticated invoice and payment APIs remain protected.
