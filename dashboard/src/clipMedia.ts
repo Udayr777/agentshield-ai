@@ -1,5 +1,7 @@
 // Original synthesized soundtrack: no downloaded songs or external audio service.
-export function soundtrack(volume:number){
+export function voiceFailure(error:string){return error!=='canceled'&&error!=='interrupted'}
+export function closeAudio(context:AudioContext){if(context.state!=='closed')void context.close().catch(()=>{})}
+export function soundtrack(volume:number,onError:()=>void=()=>{}){
  const context=new AudioContext(),destination=context.createMediaStreamDestination(),master=context.createGain();master.gain.value=volume;master.connect(context.destination);master.connect(destination);
  const start=context.currentTime+.06,beat=60/112,notes=[293.66,369.99,440,587.33,440,369.99,329.63,440];
  function tone(freq:number,at:number,duration:number,gain:number,type:OscillatorType='sine'){
@@ -11,7 +13,7 @@ export function soundtrack(volume:number){
   if(step%2===1)tone(1760,at,.035,.035);
  }
  master.gain.setValueAtTime(volume,start+16.8);master.gain.linearRampToValueAtTime(0,start+17.9);
- void context.resume();return {context,stream:destination.stream};
+ void context.resume().catch(onError);return {context,stream:destination.stream};
 }
 
 type Region={id:string;box:{x:number;y:number;w:number;h:number}};
