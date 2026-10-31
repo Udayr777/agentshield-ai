@@ -99,6 +99,12 @@ def explain(data,owner,connect,pg):
     with connect() as db:ws.query(db,'UPDATE inspection_explanations SET payload=? WHERE document_id=? AND owner_id=?',(json.dumps(output),doc['id'],owner),pg)
     return output
 
+def cached_clip(ident,owner,connect,pg):
+    import json,visual,workspace as ws
+    doc=visual.get_document(ident,owner,connect,pg)
+    with connect() as db:row=ws.query(db,'SELECT payload FROM inspection_explanations WHERE document_id=? AND owner_id=?',(doc['id']+':clip-v1',owner),pg).fetchone()
+    return json.loads(row[0]) if row else {'status':'not_generated'}
+
 def clip(data,owner,connect,pg):
     """Muse writes bounded captions; the browser renders video, not the model API."""
     import os,json,time
@@ -117,7 +123,7 @@ def clip(data,owner,connect,pg):
             result=json.loads(row[0])
             if result.get('status')=='complete':return result
             raise ws.APIError(409,'Clip scripting was already attempted. No automatic retry is made.')
-        if ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0]>=5 or ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20:raise ws.APIError(429,'Shared explanation budget reached: five/account/hour and twenty/deployment/hour.')
+        if ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchone()[0]>=5 or ws.query(db,'SELECT COUNT(*) FROM inspection_explanations WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20:raise ws.APIError(429,'New Muse generation limit reached: five per account and twenty per deployment in a rolling hour. Saved clips can still replay without credits. Try new generation after the window expires.')
         ws.query(db,'INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',(cache_id,owner,json.dumps({'status':'pending'}),now),pg)
     scene={'type':'object','properties':{'caption':{'type':'string'},'evidence_ids':{'type':'array','items':{'type':'string'}}},'required':['caption','evidence_ids'],'additionalProperties':False}
     schema={'type':'object','properties':{'scenes':{'type':'array','items':scene,'minItems':3,'maxItems':3}},'required':['scenes'],'additionalProperties':False}

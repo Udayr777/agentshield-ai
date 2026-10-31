@@ -37,6 +37,12 @@ class InspectionTests(unittest.TestCase):
             first=inspection.clip({'document_id':doc['id']},self.owner,app.connect,False)
             self.assertEqual(first['duration_seconds'],18);self.assertEqual(len(first['scenes']),3)
             self.assertEqual(first,inspection.clip({'document_id':doc['id']},self.owner,app.connect,False));self.assertEqual(model.call_count,1)
+            # Restoring a saved clip stays read-only even after new-generation quota is full.
+            with app.connect() as db:
+                for i in range(5):db.execute('INSERT INTO inspection_explanations(document_id,owner_id,payload,created_at) VALUES (?,?,?,?)',('quota-'+str(i),self.owner,'{}',int(__import__('time').time())))
+            self.assertEqual(first,inspection.cached_clip(doc['id'],self.owner,app.connect,False))
+            self.assertEqual(model.call_count,1)
+            with self.assertRaises(ws.APIError):inspection.cached_clip(doc['id'],'another-owner',app.connect,False)
             self.assertNotIn('attacker_wallet',json.dumps(model.call_args.args[2]));self.assertNotIn('preview',model.call_args.args[2])
     def test_clip_rejects_invented_evidence_and_does_not_retry(self):
         doc=self.upload('white_text');scene={'caption':'This is an invented unsupported evidence reference.','evidence_ids':['fake']}

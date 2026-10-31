@@ -166,6 +166,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/help':return self.reply(200,helpdesk.TOPICS)
             if path.path=='/ledger':return self.reply(200,ledger.inspect(user['id'],connect,bool(PG)))
             if path.path=='/documents':return self.reply(200,visual.get_document(params['id'][0],user['id'],connect,bool(PG)) if 'id' in params else visual.list_documents(user['id'],connect,bool(PG)))
+            if path.path=='/documents/visual-clip':return self.reply(200,inspection.cached_clip(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/arena/inbox':return self.reply(200,lc.inbox(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/session': return self.reply(200,{'user':user,'mode':os.getenv('ANALYZER_MODE','mock'),'storage':'postgresql' if PG else 'sqlite'})
             if path.path=='/invoices': return self.reply(200,ws.list_invoices(user['id'],connect,bool(PG)))
