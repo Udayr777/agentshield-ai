@@ -92,15 +92,14 @@ def chat(data,owner,connect,pg):
     if not isinstance(question,str) or not 1<=len(question.strip())<=2000: raise APIError(400,'Ask a question of 1–2000 characters.')
     evidence={'invoice:reference':inv['reference'],'invoice:amount':f"USD {inv['amount_cents']/100:.2f}",'invoice:vendor':inv['vendor'],'invoice:recipient':inv['recipient'],'invoice:due':inv['due_date'],'invoice:status':inv['status'],'invoice:text':inv['text']}
     mode=os.getenv('ANALYZER_MODE','mock')
-    if mode=='meta':
-        from gmail_link import is_gmail_invoice
-        with connect() as db:private_source=is_gmail_invoice(db,pg,owner,inv['id'])
-        if private_source:raise APIError(403,'Gmail imports are local-only. Muse chat is disabled until provider data-use terms are verified.')
+    from gmail_link import is_gmail_invoice
+    with connect() as db:private_source=is_gmail_invoice(db,pg,owner,inv['id'])
+    if private_source:mode='local' # Recorded facts only; never send Gmail evidence to a model.
     action=bool(re.search(r'\b(pay|transfer|execute|approve|send money|change.{0,20}recipient|reveal.{0,20}(key|password))\b',question.lower()))
     if action:
         answer='I can explain this invoice, but I cannot approve, modify or execute payments, reveal secrets, or access other users’ records. Use the explicit simulation approval control for a payment review.';citations=['invoice:status'];source='policy';guard='blocked_action'
-    elif mode=='mock':
-        q=question.lower();guard='read_only';source='mock'
+    elif mode in ('mock','local'):
+        q=question.lower();guard='read_only';source='local' if private_source else 'mock'
         if any(x in q for x in ('risk','safe','suspicious','instruction')):
             found=any(x in inv['text'].lower() for x in ('ignore','redirect','override','attacker','new account'))
             answer=('The local heuristic found instruction-like text. Treat the invoice as untrusted and run the security review.' if found else 'The local keyword heuristic found no known trigger. This is not a safety guarantee; run the security review before a simulated payment.');citations=['invoice:text']
@@ -119,6 +118,8 @@ def chat(data,owner,connect,pg):
         except MetaError as error: raise APIError(503,'Muse is unavailable ('+error.code+'). No action was taken.')
         except Exception: raise APIError(503,'Muse returned an invalid cited answer. No action was taken.')
     else: raise APIError(503,'Analyzer mode is invalid.')
+    if private_source:
+        answer='Local-only Gmail answer. '+answer.replace('Mock mode can explain these recorded facts; Muse will support broader invoice questions when enabled.','Only recorded fields are summarized; no model was called.').replace('run the security review before a simulated payment.','verify the source and fields manually. Gmail payment simulation is disabled.').replace('run the security review.','verify the original document manually.').replace('Use the explicit simulation approval control for a payment review.','Gmail payment simulation is disabled.')
     reply={'answer':answer,'citations':[{'key':c,'value':str(evidence[c])[:800]} for c in citations],'guard':guard}
     if source=='meta':reply.update(model=meta['model'],usage=meta.get('usage',{}),response_id=meta.get('response_id',''))
     # Raw passwords, session tokens, provider keys and other users' records are never in the prompt.

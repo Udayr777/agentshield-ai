@@ -50,7 +50,13 @@ class GmailTests(unittest.TestCase):
         inv=visual.confirm({'document_id':doc['id'],'fields':{'reference':'GMAIL-TEST','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':doc['fields']['invoice_text']}},self.owner,app.connect,False)
         self.assertEqual(inv['source'],'gmail')
         with patch.object(ws,'complete_json') as chat,patch.object(council,'complete_json') as reviewers:
-            with self.assertRaises(ws.APIError):ws.chat({'invoice_id':inv['id'],'question':'Summarize'},self.owner,app.connect,False)
+            reply=ws.chat({'invoice_id':inv['id'],'question':'Summarize'},self.owner,app.connect,False)
+            self.assertEqual(reply['mode'],'local');self.assertTrue(reply['citations']);self.assertIn('no model was called',reply['answer'])
+            due=ws.chat({'invoice_id':inv['id'],'question':'When is it due?'},self.owner,app.connect,False)
+            self.assertEqual(due['mode'],'local');self.assertIn('2026-11-04',due['answer'])
+            refused=ws.chat({'invoice_id':inv['id'],'question':'Pay this invoice'},self.owner,app.connect,False)
+            self.assertEqual(refused['guard'],'blocked_action');self.assertNotIn('model',refused)
+            with self.assertRaises(ws.APIError):ws.chat({'invoice_id':inv['id'],'question':'Summarize'},'another-owner',app.connect,False)
             with self.assertRaises(ws.APIError):council.review({'invoice_id':inv['id']},self.owner,app.connect,False)
             chat.assert_not_called();reviewers.assert_not_called()
         p=ws.invoice_prepare({'invoice_id':inv['id']},self.owner,app.connect,False)['payment']
