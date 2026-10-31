@@ -20,6 +20,8 @@ type Payment struct {
 	InvoiceID  string `json:"invoice_id,omitempty"`
 }
 type Risk struct {
+	Network    any            `json:"network,omitempty"`
+	Policy     any            `json:"policy,omitempty"`
 	Council    any            `json:"council,omitempty"`
 	Risk       string         `json:"risk"`
 	Reason     string         `json:"reason"`
@@ -70,6 +72,9 @@ func callWithToken(path string, value any, result any, token string) error {
 	return json.NewDecoder(r.Body).Decode(result)
 }
 func policy(p Payment, r Risk) (string, string) {
+	if r.Mode == "network" || r.Mode == "policy" {
+		return "deny", r.Reason
+	}
 	if p.Amount <= 0 || p.Amount > 100000 {
 		return "deny", "Amount must be between 1 and 100000 cents"
 	}

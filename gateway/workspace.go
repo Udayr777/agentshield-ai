@@ -239,6 +239,7 @@ func authHandler(path string) http.HandlerFunc {
 	}
 }
 func workspaceRoutes(mux *http.ServeMux) {
+	frontierRoutes(mux)
 	gmailRoutes(mux)
 	for _, path := range []string{"/judge-pack", "/help", "/help/chat", "/ledger", "/ledger/verify", "/council", "/council/review", "/council/standard"} {
 		mux.HandleFunc("/api"+path, requireSession(proxyAgent(path)))

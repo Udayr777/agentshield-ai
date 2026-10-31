@@ -63,6 +63,9 @@ def review(data,owner,connect,pg):
             values,fingerprint,image=facts(db,pg,owner,ident)
             from gmail_link import is_gmail_invoice
             if is_gmail_invoice(db,pg,owner,ident):raise ws.APIError(403,'Gmail imports are local-only. Muse council processing is disabled for these documents.')
+            import threatnet,policy_lab
+            proposal={'invoice_id':ident,'invoice':values['text'],'recipient':values['recipient'],'amount_cents':values['amount_cents']}
+            if threatnet.preflight(db,pg,owner,proposal)['blocked'] or policy_lab.preflight(db,pg,owner,proposal)['blocked']:raise ws.APIError(409,'A pre-model shared or owner policy blocked this proposal. No council calls were made.')
             recent=ws.query(db,'SELECT created_at FROM council_runs WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchall()
             total=ws.query(db,'SELECT COUNT(*) FROM council_runs WHERE created_at>?',(now-3600,),pg).fetchone()[0]
             if len(recent)>=3 or any(r[0]>now-60 for r in recent) or total>=10:raise ws.APIError(429,'Council budget reached: one per minute, three per account/hour, ten globally/hour. Failed runs count too.')
@@ -85,6 +88,8 @@ def review(data,owner,connect,pg):
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:reviews=list(pool.map(run,ROLES))
         report={'id':run_id,'owner_id':owner,'invoice_id':ident,'fingerprint':fingerprint,'created_at':now,'expires_at':int(time.time())+300,'reviews':reviews,'unanimous_low':all(r['risk']=='low' and r['status']=='complete' for r in reviews),'geometry_source':values['geometry_source'],'limits':'Three isolated prompts, same configured model/provider. Signed report attests integrity, not correctness or decentralized consensus.'}
         signed={'report':report,'signature':ledger.sign(report),'algorithm':'HMAC-SHA256'}
-        with connect() as db:ws.query(db,"UPDATE council_runs SET status='complete',payload=? WHERE id=? AND owner_id=?",(json.dumps(signed),run_id,owner),pg)
+        with connect() as db:
+            ws.query(db,"UPDATE council_runs SET status='complete',payload=? WHERE id=? AND owner_id=?",(json.dumps(signed),run_id,owner),pg)
+            if any(r['status']=='complete' and r['risk']=='high' for r in reviews):threatnet.observe(db,pg,owner,{'decision':'deny','analysis':{'risk':'high'},'payment':proposal})
         return latest(owner,ident,connect,pg)
     finally:CAPACITY.release()

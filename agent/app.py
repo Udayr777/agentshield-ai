@@ -6,6 +6,7 @@ from urllib.parse import urlparse, parse_qs
 import workspace as ws
 import visual, lifecycle as lc
 import ledger, judge, helpdesk, council, gmail_link as gmail
+import threatnet,policy_lab,escrow
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -39,6 +40,7 @@ def init():
         ws.migrate(db,bool(PG))
         visual.migrate(db)
         ledger.migrate(db);judge.migrate(db);council.migrate(db);gmail.migrate(db)
+        threatnet.migrate(db);policy_lab.migrate(db);escrow.migrate(db)
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
@@ -68,6 +70,12 @@ def audit(data,owner=None):
             if not council_gate['satisfied']:
                 checks[5]['status']='fail';data['decision']='deny';data['reason']=council_gate['reason']
         layout=judge.check(db,bool(PG),owner_key,p)
+        network=threatnet.preflight(db,bool(PG),owner_key,p);candidate=policy_lab.preflight(db,bool(PG),owner_key,p);hold=escrow.guard(db,bool(PG),owner_key,p)
+        if network['blocked'] or candidate['blocked']:
+            checks[5]['status']='fail';checks[5]['detail']=network['reason'] if network['blocked'] else candidate['reason'];data['decision']='deny';data['reason']=checks[5]['detail']
+        if hold['required']:
+            checks[6]['label']='Exact approval + passkey hold binding';checks[6]['detail']+=' Signed synthetic hold and verified passkey are also required.'
+            if not hold['satisfied']:checks[6]['status']='fail';data['decision']='deny';data['reason']=hold['reason']
         checks[0]['label']='Identity + private record scope'
         checks[0]['status']='pass' if owner and (not p.get('invoice_id') or inv is not None) else 'fail'
         checks[0]['detail']='Server-resolved session and account-scoped invoice ownership.'
@@ -94,6 +102,8 @@ def audit(data,owner=None):
         data['checks']=checks
         ws.query(db,'INSERT INTO audit (id,payload,owner_id,recorded_at) VALUES (?,?,?,?)',(data['id'],json.dumps(data),owner_key,now),bool(PG))
         ledger.append(db,bool(PG),owner_key,data)
+        escrow.finish(db,bool(PG),owner_key,p,data.get('decision'))
+        threatnet.observe(db,bool(PG),owner_key,data)
     return data
 def events(owner=None):
     with LOCK, connect() as db:
@@ -117,6 +127,19 @@ def analyze(p):
         # Never silently downgrade a live failure into an allowing mock result.
         return dict(risk='unknown',reason='Live analyzer failed; payment blocked',mode='meta-error')
 
+def analyze_owned(data,owner):
+    with connect() as db:
+        if gmail.is_gmail_invoice(db,bool(PG),owner,data.get('invoice_id','')):return {'risk':'unknown','mode':'local-only','reason':'Gmail imports remain local-only; no payment authorized.'}
+        network=threatnet.preflight(db,bool(PG),owner,data);candidate=policy_lab.preflight(db,bool(PG),owner,data)
+        if network['blocked']:return {'risk':'high','mode':'network','reason':network['reason'],'network':network}
+        if candidate['blocked']:return {'risk':'high','mode':'policy','reason':candidate['reason'],'policy':candidate}
+    result=analyze(data)
+    with connect() as db:gate=council.gate(db,bool(PG),owner,data)
+    if gate['required']:
+        result['council']=gate
+        if not gate['satisfied']:result.update(risk='unknown',reason=gate['reason'])
+    return result
+
 def scenarios():
     # Compatibility examples for analyzer tests; actual authorization is issued by /prepare.
     good=dict(recipient='vendor_acme',amount_cents=10000,approval='',invoice='Invoice 42: consulting services, USD 100.00')
@@ -129,10 +152,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path=='/health': return self.reply(200,{'status':'ok','storage':'postgresql' if PG else 'sqlite-local','mode':os.getenv('ANALYZER_MODE','mock')})
             self.internal();path=urlparse(self.path);params=parse_qs(path.query)
+            if path.path=='/network/feed':return self.reply(200,threatnet.public_feed(connect,bool(PG)))
             if path.path=='/threats':return self.reply(200,lc.gallery(connect,bool(PG)))
             if path.path=='/arena/state':return self.reply(200,lc.state(params.get('id',[''])[0],connect,bool(PG)))
             if path.path=='/gmail/callback':return self.reply(200,gmail.callback({k:v[0] for k,v in params.items()},connect,bool(PG)))
             user=self.user()
+            if path.path=='/network':return self.reply(200,threatnet.state(user['id'],connect,bool(PG)))
+            if path.path=='/policies':return self.reply(200,policy_lab.state(user['id'],connect,bool(PG)))
+            if path.path=='/escrow':return self.reply(200,escrow.state(user['id'],connect,bool(PG)))
             if path.path=='/gmail/status':return self.reply(200,gmail.status(user['id'],connect,bool(PG)))
             if path.path=='/council':return self.reply(200,council.latest(user['id'],params.get('invoice_id',[''])[0],connect,bool(PG)))
             if path.path=='/help':return self.reply(200,helpdesk.TOPICS)
@@ -168,6 +195,17 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
+            session_token=self.headers.get('Authorization','').removeprefix('Bearer ')
+            if self.path=='/network/preferences':return self.reply(200,threatnet.set_preference(data,owner,connect,bool(PG)))
+            if self.path=='/policies/propose':return self.reply(200,policy_lab.propose(owner,connect,bool(PG)))
+            if self.path=='/policies/promote':return self.reply(200,policy_lab.promote(data,owner,connect,bool(PG)))
+            if self.path=='/policies/rollback':return self.reply(200,policy_lab.rollback(owner,connect,bool(PG)))
+            if self.path=='/escrow/create':return self.reply(200,escrow.create(data,owner,connect,bool(PG)))
+            if self.path=='/escrow/cancel':return self.reply(200,escrow.cancel(data,owner,connect,bool(PG)))
+            if self.path=='/passkeys/register/options':return self.reply(200,escrow.register_options(owner,session_token,connect,bool(PG)))
+            if self.path=='/passkeys/register/verify':return self.reply(200,escrow.register_verify(data,owner,session_token,connect,bool(PG)))
+            if self.path=='/escrow/release/options':return self.reply(200,escrow.release_options(data,owner,session_token,connect,bool(PG)))
+            if self.path=='/escrow/release/authorize':return self.reply(200,escrow.authorize_release(data,owner,session_token,connect,bool(PG)))
             if self.path=='/gmail/connect':return self.reply(200,gmail.begin(owner,self.headers.get('Authorization','').removeprefix('Bearer '),connect,bool(PG)))
             if self.path=='/gmail/search':return self.reply(200,gmail.search(data,owner,connect,bool(PG)))
             if self.path=='/gmail/attachments':return self.reply(200,gmail.attachments(data,owner,connect,bool(PG)))
@@ -198,14 +236,7 @@ class Handler(BaseHTTPRequestHandler):
                 data['conversation_id']=self.chat_scope()
                 return self.reply(200,ws.chat(data,owner,connect,bool(PG)))
             if self.path=='/analyze':
-                with connect() as db:private_source=gmail.is_gmail_invoice(db,bool(PG),owner,data.get('invoice_id',''))
-                if private_source:return self.reply(200,{'risk':'unknown','mode':'local-only','reason':'Gmail imports are local-only. External model analysis is disabled; no payment authorized.'})
-                result=analyze(data)
-                with connect() as db:gate=council.gate(db,bool(PG),owner,data)
-                if gate['required']:
-                    result['council']=gate
-                    if not gate['satisfied']:result.update(risk='unknown',reason=gate['reason'])
-                return self.reply(200,result)
+                return self.reply(200,analyze_owned(data,owner))
             if self.path=='/prepare': return self.reply(200,prepare(data,connect,PG,owner))
             if self.path=='/audit':
                 result=audit(data,owner);return self.reply(200,{'saved':True,'decision':result.get('decision'),'reason':result.get('reason'),'checks':result.get('checks')})

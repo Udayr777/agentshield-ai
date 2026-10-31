@@ -12,6 +12,7 @@ def load_config(path=None):
     allowed={'ANALYZER_MODE','META_API_KEY','MODEL_API_KEY','META_MODEL','META_BASE_URL','META_MAX_COMPLETION_TOKENS','META_TIMEOUT_SECONDS','META_REASONING_EFFORT','META_SAM_MODEL','META_VISUAL_MODE','DATABASE_URL','DATABASE_URL_UNPOOLED','COOKIE_SECURE'}
     allowed.update({'LEDGER_SIGNING_KEY','LEDGER_KEY_FILE'})
     allowed.update({'GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REDIRECT_URI','GMAIL_TOKEN_KEY'})
+    allowed.update({'POLICY_MODEL','WEBAUTHN_ORIGIN'})
     for path in paths:
       if path.exists():
         for line in path.read_text(encoding='utf-8-sig').splitlines():
@@ -25,10 +26,10 @@ def record(meta):
         with LOCK,target.open('a',encoding='utf-8') as f:f.write(json.dumps(meta)+'\n')
     except OSError:pass # Usage diagnostics cannot turn a blocked payment into an allow.
 
-def complete_json(purpose,instruction,evidence,schema,image=None):
+def complete_json(purpose,instruction,evidence,schema,image=None,model_override=None):
     key=os.getenv('META_API_KEY') or os.getenv('MODEL_API_KEY')
     if not key:raise MetaError('missing_key')
-    model=os.getenv('META_MODEL','muse-spark-1.3');start=time.perf_counter()
+    model=model_override or os.getenv('META_MODEL','muse-spark-1.3');start=time.perf_counter()
     cap=max(256,min(8192,int(os.getenv('META_MAX_COMPLETION_TOKENS','2048'))))
     timeout=max(5,min(90,int(os.getenv('META_TIMEOUT_SECONDS','45'))))
     body={'model':model,'messages':[{'role':'developer','content':instruction},{'role':'user','content':json.dumps(evidence)}],
