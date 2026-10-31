@@ -1,7 +1,7 @@
 """Synthetic finance agent, risk analyzer, and durable audit service. No banking integrations."""
 import json, os, sqlite3, threading, urllib.request
 import time
-import secrets, hmac
+import secrets, hmac, hashlib
 from urllib.parse import urlparse, parse_qs
 import workspace as ws
 import visual, lifecycle as lc
@@ -130,7 +130,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/arena/inbox':return self.reply(200,lc.inbox(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/session': return self.reply(200,{'user':user,'mode':os.getenv('ANALYZER_MODE','mock'),'storage':'postgresql' if PG else 'sqlite'})
             if path.path=='/invoices': return self.reply(200,ws.list_invoices(user['id'],connect,bool(PG)))
-            if path.path=='/chat': return self.reply(200,ws.history(parse_qs(path.query).get('invoice_id',[''])[0],user['id'],connect,bool(PG)))
+            if path.path=='/chat': return self.reply(200,ws.history(parse_qs(path.query).get('invoice_id',[''])[0],user['id'],connect,bool(PG),self.chat_scope()))
             if self.path=='/events': return self.reply(200,events(user['id']))
             if self.path=='/scenarios': return self.reply(200,CATALOG)
             if self.path=='/catalog': return self.reply(200,CATALOG)
@@ -140,6 +140,9 @@ class Handler(BaseHTTPRequestHandler):
     def internal(self):
         if not hmac.compare_digest(self.headers.get('X-Service-Token',''),service_token()):raise ws.APIError(403,'Internal service authentication required.')
     def user(self):return ws.session(self.headers.get('Authorization','').removeprefix('Bearer '),connect,bool(PG))
+    def chat_scope(self):
+        # Derive conversation scope from the authenticated session, never client JSON.
+        return hashlib.sha256(('invoice-chat:'+self.headers.get('Authorization','').removeprefix('Bearer ')).encode()).hexdigest()
     def do_POST(self):
         try:
             self.internal()
@@ -171,7 +174,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/invoices':return self.reply(200,ws.create_invoice(data,owner,connect,bool(PG)))
             if self.path=='/invoice-prepare':return self.reply(200,ws.invoice_prepare(data,owner,connect,bool(PG)))
             if self.path=='/invoice-chaos':return self.reply(200,lc.invoice_chaos(data,owner,connect,bool(PG)))
-            if self.path=='/chat':return self.reply(200,ws.chat(data,owner,connect,bool(PG)))
+            if self.path=='/chat':
+                data['conversation_id']=self.chat_scope()
+                return self.reply(200,ws.chat(data,owner,connect,bool(PG)))
             if self.path=='/analyze': return self.reply(200,analyze(data))
             if self.path=='/prepare': return self.reply(200,prepare(data,connect,PG,owner))
             if self.path=='/audit':

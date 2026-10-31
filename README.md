@@ -45,6 +45,8 @@ The UI reports pass/fail/unknown/not-measured from the recorded evaluation. Pass
 
 ## Accounts, isolation and authority
 
+Each login starts a fresh invoice-copilot conversation. Messages and model context are scoped to the authenticated login session as well as the account and invoice. Refreshing within that session restores its chat; signing out and signing in starts empty. Earlier chat records are retained in storage, while invoices and audit history continue to persist across logins.
+
 Passwords use salted scrypt (N=32768,r=8,p=3). Random session tokens are stored as SHA-256 digests, expire after eight hours, and are revoked on logout. The browser uses an HttpOnly, SameSite=Strict cookie rather than localStorage. Set `COOKIE_SECURE=true` behind HTTPS; the localhost HTTP demo uses false. Login/registration and chat have per-IP limits. The development proxy and production Nginx preserve the request Host for origin checks.
 
 User identity is resolved from the session on the server. Invoices, chat history, approval use and audit retrieval are scoped to that identity. Existing pre-account demo records are preserved with an empty owner and are not shown to newly registered users. This MVP does not implement email verification, MFA, password recovery, role separation, or a reviewed production identity provider. Do not expose it publicly as a production financial system.

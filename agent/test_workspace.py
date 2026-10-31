@@ -46,4 +46,23 @@ class WorkspaceTests(unittest.TestCase):
             with self.assertRaises(ws.APIError) as cm:ws.chat({'invoice_id':inv['id'],'question':'Explain the services'},owner,app.connect,False)
             self.assertEqual(cm.exception.status,503)
 
+    def test_new_login_starts_empty_chat_and_keeps_invoice_and_old_records(self):
+        first=self.account('fresh');owner=first['user']['id'];inv=ws.list_invoices(owner,app.connect,False)[0]
+        def scope(token):
+            handler=object.__new__(app.Handler);handler.headers={'Authorization':'Bearer '+token}
+            return handler.chat_scope()
+        old_scope=scope(first['token'])
+        ws.chat({'invoice_id':inv['id'],'question':'When is it due?','conversation_id':old_scope},owner,app.connect,False)
+        self.assertEqual(len(ws.history(inv['id'],owner,app.connect,False,old_scope)),2)
+        ws.logout(first['token'],app.connect,False)
+        second=ws.auth({'email':'fresh@example.test','password':'Synthetic-test-password-2026!'},False,app.connect,False)
+        new_scope=scope(second['token']);self.assertNotEqual(old_scope,new_scope)
+        self.assertEqual(ws.history(inv['id'],owner,app.connect,False,new_scope),[])
+        self.assertEqual(ws.get_invoice(inv['id'],owner,app.connect,False)['id'],inv['id'])
+        with app.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM messages WHERE owner_id=?',(owner,)).fetchone()[0],2)
+        ws.chat({'invoice_id':inv['id'],'question':'Amount?','conversation_id':new_scope},owner,app.connect,False)
+        self.assertEqual(len(ws.history(inv['id'],owner,app.connect,False,new_scope)),2)
+        with self.assertRaises(ws.APIError) as error:self.account('fresh')
+        self.assertEqual(error.exception.message,'You already have an account. Please sign in.')
+
 if __name__=='__main__':unittest.main()
