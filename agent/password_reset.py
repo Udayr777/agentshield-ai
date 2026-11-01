@@ -15,7 +15,11 @@ def config():
     sender=os.getenv('PASSWORD_RESET_FROM','')
     if not os.getenv('RESEND_API_KEY') or not sender or '\r' in sender or '\n' in sender:return None
     return origin,sender
-def status():return {'configured':config() is not None}
+def test_sender():
+    from email.utils import parseaddr
+    return parseaddr(os.getenv('PASSWORD_RESET_FROM',''))[1].lower().endswith('@resend.dev')
+
+def status():return {'configured':config() is not None,'test_sender':test_sender()}
 def deliver(email,token,settings):
     origin,sender=settings
     link=origin+'/#reset-password?token='+token

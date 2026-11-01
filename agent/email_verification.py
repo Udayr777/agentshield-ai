@@ -16,7 +16,7 @@ def state(owner,connect,pg):
         all_requests=ws.query(db,'SELECT created_at FROM verification_requests WHERE created_at>? ORDER BY created_at',(now-3600,),pg).fetchall()
         retry=max([0]+([own[-1][0]+60-now] if own else [])+([own[-3][0]+3600-now] if len(own)>=3 else [])+([all_requests[-20][0]+3600-now] if len(all_requests)>=20 else []))
         pending=ws.query(db,'SELECT token_hash FROM email_verifications WHERE owner_id=? AND used=0 AND expires_at>?',(owner,now),pg).fetchone()
-    return {'retry_after_seconds':max(0,retry),'pending_link':bool(pending),'verified':bool(verified),'verified_at':verified[0] if verified else None,'configured':password_reset.config() is not None}
+    return {'test_sender':password_reset.test_sender(),'retry_after_seconds':max(0,retry),'pending_link':bool(pending),'verified':bool(verified),'verified_at':verified[0] if verified else None,'configured':password_reset.config() is not None}
 def deliver(email,token,settings):
     origin,sender=settings;link=origin+'/#verify-email?token='+token;escaped=html.escape(link,quote=True)
     text='Verify your AgentShield email address. Open this single-use link within 30 minutes: '+link+'\nThis confirms mailbox ownership only. It does not authorize a payment. If you did not request it, ignore this message. Never share the link.'

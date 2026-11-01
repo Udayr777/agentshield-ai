@@ -57,3 +57,9 @@ class EmailVerificationTests(unittest.TestCase):
   self.assertGreater(status['retry_after_seconds'],0);self.assertLessEqual(status['retry_after_seconds'],60)
   self.assertTrue(status['pending_link']);self.assertNotIn(token,str(status))
   with patch.object(ev.time,'time',return_value=time.time()+61):self.assertEqual(ev.state(self.owner,app.connect,False)['retry_after_seconds'],0)
+
+ def test_test_sender_notice_does_not_expose_operator_address(self):
+  with patch.dict(os.environ,{'PASSWORD_RESET_FROM':'AgentShield AI <onboarding@resend.dev>'}):
+   self.assertTrue(ev.state(self.owner,app.connect,False)['test_sender'])
+   self.assertTrue(ev.password_reset.status()['test_sender'])
+  self.assertFalse(ev.state(self.owner,app.connect,False)['test_sender'])
