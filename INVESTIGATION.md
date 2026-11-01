@@ -47,3 +47,5 @@ python scripts/check-investigation.py --url https://agentshield-ai-lgdd.onrender
 ```
 
 The script creates a synthetic test account, loads the synthetic judge fixture, checks partner configuration, starts/polls a run, verifies its completion and partner-response flag, verifies no payment events were created and the invoice remains pending, and checks the sanitized share kit. It saves a private `live-investigation.json` report (Git-ignored). `--require-partner` fails before model calls when the partner is absent. It does not verify a physical screen-recording permission ceremony or partner adjudication.
+
+When only one tool is allowed, code selects it without a model call. These trace entries are explicitly labeled Code-enforced transition. Model planning is used only where several actions are available; invalid planner output still fails closed.

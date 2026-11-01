@@ -21,7 +21,7 @@ class InvestigationTests(unittest.TestCase):
         with patch.object(agent,'complete_json',side_effect=self.model) as model:run=self.start()
         self.assertEqual(run['status'],'complete');self.assertTrue(run['partner_response_recorded']);self.assertEqual(len(run['trace']),4)
         self.assertEqual([t['action'] for t in run['trace']],['read_invoice','inspect_visual','review_open_weight','finish'])
-        self.assertTrue(any(c.kwargs.get('provider')=='baseten' for c in model.call_args_list));self.assertEqual(run['report_provenance']['model'],'muse-wonder-1.0')
+        self.assertEqual(sum(c.args[0]=='investigation_plan' for c in model.call_args_list),1);self.assertEqual(run['trace'][2]['planner']['provider'],'deterministic');self.assertTrue(any(c.kwargs.get('provider')=='baseten' for c in model.call_args_list));self.assertEqual(run['report_provenance']['model'],'muse-wonder-1.0')
         self.assertEqual(ws.get_invoice(self.invoice,self.owner,app.connect,False)['status'],'pending');self.assertEqual(app.events(self.owner),[])
         with app.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM approvals').fetchone()[0],0)
         public=agent.share(run['id'],self.owner,app.connect,False);self.assertNotIn('attacker_wallet',json.dumps(public));self.assertNotIn('invoice:content',json.dumps(public))
@@ -42,3 +42,12 @@ class InvestigationTests(unittest.TestCase):
     def test_meta_only_mode_does_not_claim_partner_use(self):
         with patch.dict(os.environ,{'BASETEN_API_KEY':''}),patch.object(agent,'complete_json',side_effect=self.model):run=self.start()
         self.assertEqual(run['status'],'complete');self.assertFalse(run['partner_response_recorded']);self.assertNotIn('review_open_weight',[t['action'] for t in run['trace']])
+
+    def test_malformed_planner_cannot_skip_required_partner_review(self):
+        from meta_client import MetaError
+        with patch.object(agent,'complete_json',side_effect=MetaError('invalid_model_json')) as model:run=self.start()
+        self.assertEqual(run['status'],'failed')
+        self.assertEqual(run['error_stage'],'planner_step_2')
+        self.assertEqual([t['action'] for t in run['trace']],['read_invoice'])
+        self.assertFalse(run['partner_response_recorded'])
+        self.assertEqual(model.call_count,1)
