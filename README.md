@@ -20,7 +20,7 @@ Live features require operator-configured credentials and consume provider credi
 
 | Area | Included | Boundary |
 |---|---|---|
-| Accounts | Sign up/in/out, private workspace, profile, session-scoped chat, branded password-reset emails | No signup email verification or production identity certification |
+| Accounts | Sign up/in/out, private workspace, profile, session-scoped chat, mailbox verification, branded password-reset emails | Optional mailbox verification; no production identity certification |
 | Visual invoice guard | PDF/image upload, editable fields, original/enhanced/anomaly views, geometry anchors, optional Muse extraction and SAM refinement | Local geometry is not SAM; inspect actual provenance |
 | Go security gateway | Ten observed controls, exact approvals, expiry, replay prevention and atomic audit | Simulated payments only |
 | Chaos/replay | Recipient swaps, oversized transfers, injection and invalid approvals | Scripted attack fixtures and baselines are labeled |
@@ -129,6 +129,8 @@ APP_PUBLIC_URL=https://your-app.onrender.com
 ```
 
 Verify a sender domain for general delivery. The `onboarding@resend.dev` test sender is restricted to the Resend account owner's address. The recipient must be the email registered in AgentShield. For local testing deliberately set `APP_PUBLIC_URL` to the actual localhost dashboard origin.
+
+Signup attempts a mailbox-verification email when delivery is configured. In **My profile**, inspect verification status or click **Send verification link**. Open the emailed link and explicitly confirm. Verification links expire after 30 minutes and work once; resends invalidate earlier links. Verification is optional for this synthetic demo and does not authorize payments. See [email verification](EMAIL-VERIFICATION.md).
 
 Use **Forgot password**, request the email and open its link. Links expire after 15 minutes and are single-use; successful reset revokes sessions. The generic confirmation does not prove delivery. Inspect Resend delivery/log status and spam if needed. See [password recovery](PASSWORD-RECOVERY.md).
 
