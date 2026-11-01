@@ -3,3 +3,9 @@
 .clip-audio-controls{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:16px 0;padding:16px;background:#fff;border:1px solid #cfdfeb;border-radius:12px}.clip-audio-controls label{display:grid;gap:7px;font-size:.8rem;color:#2b4c65}.clip-audio-controls select{max-width:300px;padding:9px;border:1px solid #b9d1df;border-radius:8px;background:#f5fbff;color:#183b53}.clip-audio-controls input[type=range]{accent-color:#168f9b}.invoice-clip canvas{background:#e4f7ff;box-shadow:0 12px 30px #6689ab20}
 
 .invoice-clip{background:linear-gradient(125deg,#fff5ef,#f2efff 48%,#e6faf6);border-color:#d9c9f1;box-shadow:0 12px 38px #6e58ac12}.invoice-clip>.section-heading .micro-chip{background:linear-gradient(110deg,#ffe1c6,#e8daff,#c8f6ef);color:#33285e;border:1px solid #d7c7ed}.invoice-clip canvas{background:#251b59;border:1px solid #c6b5ed;box-shadow:0 15px 38px #5c388a28}.invoice-clip .clip-caption{border-left-color:#8956d6}.invoice-clip .primary-button{background:linear-gradient(105deg,#7c40ce,#305ecb);color:white}.invoice-clip .clip-audio-controls{background:#ffffffce}
+
+/* Keep the evidence film at a comfortable preview size on wide monitors. */
+.invoice-clip{padding:18px}
+.invoice-clip canvas{width:100%;max-width:760px;height:auto;aspect-ratio:16/9;margin:16px auto;border-radius:12px}
+.invoice-clip .clip-actions,.invoice-clip .clip-audio-controls,.invoice-clip .clip-caption{max-width:960px;margin-left:auto;margin-right:auto}
+@media(max-width:650px){.invoice-clip{padding:12px}.invoice-clip canvas{max-width:100%}}
