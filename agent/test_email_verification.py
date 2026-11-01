@@ -51,3 +51,9 @@ class EmailVerificationTests(unittest.TestCase):
   with patch.object(ev.time,'time',return_value=time.time()+183):
    with self.assertRaises(ws.APIError) as caught:ev.request(self.owner,app.connect,False)
   self.assertEqual(caught.exception.status,429)
+
+ def test_state_exposes_cooldown_without_exposing_token(self):
+  token=self.token();status=ev.state(self.owner,app.connect,False)
+  self.assertGreater(status['retry_after_seconds'],0);self.assertLessEqual(status['retry_after_seconds'],60)
+  self.assertTrue(status['pending_link']);self.assertNotIn(token,str(status))
+  with patch.object(ev.time,'time',return_value=time.time()+61):self.assertEqual(ev.state(self.owner,app.connect,False)['retry_after_seconds'],0)
