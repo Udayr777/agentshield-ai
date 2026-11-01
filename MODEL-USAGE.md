@@ -1,5 +1,7 @@
 # Meta model usage in AgentShield
 
+Decision insights add an explicit `decision_explanation` call using verified owner-scoped receipts. Input contains recorded controls, analyzer assessment and recipient/amount differences, but no raw invoice text or approval tokens. Citations are validated; results are signed, cached and cannot change decisions. Gmail-derived receipts remain local-only. See [Decision insights](DECISION-INSIGHTS.md).
+
 An operator-only Spark-versus-Wonder comparison uses the same risk analyzer with an explicit per-call model override. It leaves `META_MODEL` and payment behavior unchanged. See [Model comparison](MODEL-COMPARISON.md) for the synthetic dataset, run command and limits.
 
 Invoice briefs add an explicit `visual_clip_script` Muse call: exactly three bounded captions with validated evidence references, cached per document and sharing inspection quotas. The browser renders an 18-second animation and optional WebM export with an original locally synthesized music bed. Selectable energetic narration uses a local browser voice, not a Meta audio model. There is no claim of Meta-generated video/audio. Gmail scripts remain blocked. See [Visual inspection](VISUAL-INSPECTION.md).

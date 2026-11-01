@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,7 +19,7 @@ func TestInterception(t *testing.T) {
 				w.WriteHeader(503)
 				return
 			}
-			w.Write([]byte(`{"saved":true,"decision":"allow","reason":"test committed"}`))
+			w.Write([]byte(`{"saved":true,"decision":"allow","reason":"test committed","comparison":{"available":true}}`))
 		}))
 		t.Setenv("AGENT_URL", server.URL)
 		req := httptest.NewRequest("POST", "/api/payments", strings.NewReader(`{"recipient":"vendor_acme","amount_cents":10000,"approval_id":"test-capability","invoice":"Invoice 42"}`))
@@ -30,6 +31,16 @@ func TestInterception(t *testing.T) {
 		}
 		if w.Code != want {
 			t.Fatalf("auditOK=%v status=%d", auditOK, w.Code)
+		}
+		if auditOK {
+			var result struct {
+				Comparison struct {
+					Available bool `json:"available"`
+				} `json:"comparison"`
+			}
+			if json.Unmarshal(w.Body.Bytes(), &result) != nil || !result.Comparison.Available {
+				t.Fatal("Committed source comparison was dropped by the gateway")
+			}
 		}
 		server.Close()
 	}

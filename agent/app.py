@@ -7,7 +7,7 @@ import workspace as ws
 import visual, lifecycle as lc
 import ledger, judge, helpdesk, council, gmail_link as gmail
 import threatnet,policy_lab,escrow
-import inspection,password_reset
+import inspection,password_reset,decision_insight
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -45,6 +45,7 @@ def init():
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
+        data['comparison']=decision_insight.snapshot(db,bool(PG),owner_key,p)
         cap=ws.query(db,'SELECT recipient,amount_cents,expires_at,used,owner_id,invoice_id FROM approvals WHERE token=?',(p.get('approval_id',''),),bool(PG)).fetchone()
         inv=None
         if p.get('invoice_id'): inv=ws.query(db,'SELECT status FROM invoices WHERE id=? AND owner_id=?',(p['invoice_id'],owner_key),bool(PG)).fetchone()
@@ -170,6 +171,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/documents/visual-clip':return self.reply(200,inspection.cached_clip(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/arena/inbox':return self.reply(200,lc.inbox(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/session': return self.reply(200,{'user':user,'mode':os.getenv('ANALYZER_MODE','mock'),'storage':'postgresql' if PG else 'sqlite'})
+            if path.path=='/decisions/insight':return self.reply(200,decision_insight.get(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/profile':return self.reply(200,ws.profile(user['id'],connect,bool(PG)))
             if path.path=='/invoices': return self.reply(200,ws.list_invoices(user['id'],connect,bool(PG)))
             if path.path=='/chat': return self.reply(200,ws.history(parse_qs(path.query).get('invoice_id',[''])[0],user['id'],connect,bool(PG),self.chat_scope()))
@@ -202,6 +204,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path=='/arena/submit':
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
+            if self.path=='/decisions/explain':return self.reply(200,decision_insight.explain(data,owner,connect,bool(PG)))
             if self.path=='/profile':return self.reply(200,ws.profile(owner,connect,bool(PG),data))
             session_token=self.headers.get('Authorization','').removeprefix('Bearer ')
             if self.path=='/network/preferences':return self.reply(200,threatnet.set_preference(data,owner,connect,bool(PG)))
@@ -250,7 +253,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(200,analyze_owned(data,owner))
             if self.path=='/prepare': return self.reply(200,prepare(data,connect,PG,owner))
             if self.path=='/audit':
-                result=audit(data,owner);return self.reply(200,{'saved':True,'decision':result.get('decision'),'reason':result.get('reason'),'checks':result.get('checks')})
+                result=audit(data,owner);return self.reply(200,{'saved':True,'decision':result.get('decision'),'reason':result.get('reason'),'checks':result.get('checks'),'comparison':result.get('comparison')})
             self.reply(404,{'error':'Not found'})
         except ws.APIError as error:self.reply(error.status,{'error':error.message})
         except Exception: self.reply(503,{'error':'Request failed'})

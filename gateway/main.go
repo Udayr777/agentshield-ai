@@ -31,15 +31,16 @@ type Risk struct {
 	ResponseID string         `json:"response_id,omitempty"`
 }
 type Decision struct {
-	ID       string           `json:"id"`
-	Payment  Payment          `json:"payment"`
-	Decision string           `json:"decision"`
-	Reason   string           `json:"reason"`
-	Analysis Risk             `json:"analysis"`
-	Duration float64          `json:"duration_ms"`
-	Created  string           `json:"created_at"`
-	Replay   any              `json:"replay,omitempty"`
-	Checks   []map[string]any `json:"checks,omitempty"`
+	Comparison any              `json:"comparison,omitempty"`
+	ID         string           `json:"id"`
+	Payment    Payment          `json:"payment"`
+	Decision   string           `json:"decision"`
+	Reason     string           `json:"reason"`
+	Analysis   Risk             `json:"analysis"`
+	Duration   float64          `json:"duration_ms"`
+	Created    string           `json:"created_at"`
+	Replay     any              `json:"replay,omitempty"`
+	Checks     []map[string]any `json:"checks,omitempty"`
 }
 
 var client = &http.Client{Timeout: 100 * time.Second}
@@ -131,10 +132,11 @@ func decide(p Payment, replay any, token string) (Decision, error) {
 	v := Decision{ID: fmt.Sprintf("%d", time.Now().UnixNano()), Payment: p, Decision: d, Reason: reason, Analysis: risk, Duration: float64(time.Since(start).Microseconds()) / 1000, Created: time.Now().UTC().Format(time.RFC3339Nano)}
 	v.Replay = replay
 	var ack struct {
-		Saved    bool             `json:"saved"`
-		Decision string           `json:"decision"`
-		Reason   string           `json:"reason"`
-		Checks   []map[string]any `json:"checks"`
+		Comparison any              `json:"comparison"`
+		Saved      bool             `json:"saved"`
+		Decision   string           `json:"decision"`
+		Reason     string           `json:"reason"`
+		Checks     []map[string]any `json:"checks"`
 	}
 	if callWithToken("/audit", v, &ack, token) != nil || !ack.Saved || (ack.Decision != "allow" && ack.Decision != "deny") {
 		return Decision{}, fmt.Errorf("Audit unavailable; execution blocked")
@@ -145,6 +147,7 @@ func decide(p Payment, replay any, token string) (Decision, error) {
 	v.Decision = ack.Decision
 	v.Reason = ack.Reason
 	v.Checks = ack.Checks
+	v.Comparison = ack.Comparison
 	return v, nil
 }
 func replay(w http.ResponseWriter, r *http.Request) {
