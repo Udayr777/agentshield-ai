@@ -1,0 +1,14 @@
+.muse-hero-stage{position:relative;overflow:hidden;background:radial-gradient(ellipse at center,#e8e1fc,#f8f6f0)}
+.muse-hero-art{display:none;width:100%;height:100%;object-fit:contain;position:absolute;inset:0}
+.muse-art-ready>.muse-hero-art{display:block;animation:muse-art-breathe 8s ease-in-out infinite}
+.muse-art-ready>:not(.muse-hero-art){display:none!important}
+.landing-paused .muse-hero-art{animation-play-state:paused}
+.muse-art-credit{display:block;padding:7px 18px;color:#536482;background:#f5f2fc;font-size:10px;line-height:1.5}
+.empty-invoice-workspace.muse-welcome{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;align-items:center;text-align:left;padding:28px}
+.muse-welcome-art{width:100%;aspect-ratio:1;object-fit:contain;border-radius:18px}
+.muse-welcome-copy h2{margin-top:8px}
+.muse-welcome-copy .fine-print{display:block;margin-top:12px}
+@keyframes muse-art-breathe{50%{transform:translateY(-5px) scale(1.015)}}
+@media(max-width:800px){.empty-invoice-workspace.muse-welcome{grid-template-columns:150px minmax(0,1fr);gap:18px;padding:20px}}
+@media(max-width:540px){.empty-invoice-workspace.muse-welcome{grid-template-columns:1fr}.muse-welcome-art{max-width:180px;margin:auto}.muse-welcome-copy{text-align:center}}
+@media(prefers-reduced-motion:reduce){.muse-hero-art{animation:none!important}}

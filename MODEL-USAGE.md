@@ -33,3 +33,7 @@ The five-stop tour ends with **Finish tour**. Completion is saved per account in
 All pages use `dashboard/src/workspace-theme.css` for light panels and readable text, including the actual `.chat-panel`, `.security-board`, `.approval-bar`, `.upload-zone` and `.invoice-chaos` elements. The separate cinematic landing-page illustration retains its intentional dark treatment.
 
 Zivvi hover greeting uses a six-pose full-character sheet derived from the original Muse character reference with the OpenAI image-generation/editing tool. Runtime frame playback is local, not Muse Video or live image generation, and not a rigged 3D model. The original Muse asset/provenance remain unchanged; derived-sheet provenance is recorded separately in dashboard/public/zivvi-wave-provenance.json. There is no detached hand overlay.
+
+## Saved Muse Image scenes
+
+The landing-page glass-shield illustration and empty-workspace welcome scene were generated using Meta Model API `muse-image-1.0`. Files and prompt/model provenance are in `dashboard/public/muse-landing-guardian*` and `dashboard/public/muse-workspace-welcome*`. They are conceptual brand artwork, not document evidence or detector results. Display and CSS motion make no model calls. The explicit offline `scripts/create-muse-scenes.py` generator skips existing outputs; running it with missing outputs uses provider credits. No invoice content is included in its prompts.

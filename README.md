@@ -30,7 +30,7 @@ Live features require operator-configured credentials and consume provider credi
 | Audit ledger | HMAC-signed event/node chains and exported checkpoints | Tail deletion needs an earlier trusted checkpoint; host/key compromise is outside the guarantee |
 | Security frontier | Opt-in shared synthetic signatures, WebAuthn simulated holds, proposed additive policies with benchmark/promotion/rollback | No live financial escrow or automatic gateway code rewriting |
 | Gmail | Read-only OAuth, explicit search/attachment import, local cited facts | No background scanning, external-model processing, payment simulation or public sharing of imports |
-| Presentation | Animated Zivvi, guided demo, public app-help copilot, local explanation clips and screen recording | Browser animation/voice is not Muse-generated video |
+| Presentation | Muse Image landing/welcome artwork, animated Zivvi, guided demo, public app-help copilot, local explanation clips and screen recording | Browser animation/voice is not Muse-generated video |
 | Other tools | Review council, Spark/Wonder comparison, Hall of Scams, synthetic broadcast arena, browser companion | Optional; focused guides linked below |
 
 ## Architecture and connected services
