@@ -23,7 +23,7 @@ import ExplodedAudit from './ExplodedAudit';
 import ChaosSandbox from './ChaosSandbox';
 import {Logo,Guide,JudgeLaunch,HelpCenter,LedgerPanel} from './Upgrade';
 import './lifecycle.css';
-import './style.css';import './workspace.css';import './upgrade.css';import './workspace-theme.css';
+import './style.css';import './workspace.css';import './upgrade.css';import './workspace-theme.css';import './guide-layout.css';
 type User={id:string;name:string;email:string};type Invoice={source?:string;id:string;reference:string;vendor:string;recipient:string;amount_cents:number;due_date:string;text:string;status:string};
 async function api(path:string,body?:unknown){const r=await fetch('/api'+path,body!==undefined?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined);const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Service unavailable'),{status:r.status});return d}
 const money=(v:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v/100);

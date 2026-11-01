@@ -1,0 +1,25 @@
+/* Keep Zivvi inside a coherent card, aligned with the workspace. */
+.workspace-content{max-width:none;min-width:0}
+.workspace-guide.aegis-guide{right:20px;bottom:20px;display:flex;flex-direction:column;align-items:stretch;gap:0;width:320px;max-width:calc(100vw - 40px);padding:12px;background:#fff;border:1px solid #ccd6e7;border-radius:18px;box-shadow:0 12px 40px #20364f16;pointer-events:auto;transform:none;max-height:calc(100dvh - 110px);overflow:auto}
+.workspace-guide.aegis-guide.guide-left{transform:none}
+.workspace-guide .guide-toggle,.workspace-guide.copilot-mode .guide-toggle{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;padding:4px 8px;border:0;border-radius:10px;box-shadow:none;text-align:left;flex-shrink:0}
+.workspace-guide .guide-toggle>.zivvi-avatar{width:68px;height:68px;flex:0 0 68px;border-radius:12px;background:#f1f4fc}
+.workspace-guide .guide-toggle>span:last-child,.workspace-guide.copilot-mode .guide-toggle>span:last-child{font-size:12px;color:#284cad}
+.workspace-guide .guide-bubble,.workspace-guide.copilot-mode .guide-bubble{width:100%;max-width:none;padding:14px 8px 4px;background:transparent;border:0;border-top:1px solid #e1e7f0;border-radius:0;box-shadow:none;min-width:0}
+.workspace-guide .guide-bubble p{font-size:13px;line-height:1.65}
+.workspace-guide .guide-bubble b{font-size:13px}
+.workspace-guide .guide-bubble b small{font-size:9px}
+.workspace-guide .aegis-help-form textarea{width:100%;box-sizing:border-box}
+.workspace-guide .aegis-help-answer{max-height:240px;overflow:auto;overflow-wrap:anywhere}
+.workspace-guide .guide-actions{display:flex;flex-wrap:wrap;gap:6px}
+@media(min-width:1600px){
+ .workspace-content{padding-right:380px;padding-bottom:60px}
+ .workspace-guide.aegis-guide{top:96px;right:24px;bottom:auto;width:320px;max-height:calc(100dvh - 120px)}
+}
+@media(max-width:700px){
+ .workspace-guide.aegis-guide{right:12px;bottom:12px;width:290px;max-width:calc(100vw - 24px);max-height:65dvh;padding:10px}
+ .workspace-guide.guide-closed{width:150px}
+ .workspace-guide .guide-toggle>.zivvi-avatar{width:48px;height:48px;flex-basis:48px}
+ .workspace-guide .guide-toggle>span:last-child{font-size:11px}
+}
+.workspace-guide .guide-toggle .zivvi-avatar>img{width:100%;height:100%;object-fit:contain;border-radius:inherit}
