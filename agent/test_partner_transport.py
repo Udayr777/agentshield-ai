@@ -14,3 +14,16 @@ class PartnerTransportTests(unittest.TestCase):
         with patch.dict(os.environ,{'META_API_KEY':'meta-private-test','BASETEN_API_KEY':''}),patch.object(meta_client.urllib.request,'urlopen') as network:
             with self.assertRaises(meta_client.MetaError):meta_client.complete_json('test','test',{}, {},provider='baseten')
             network.assert_not_called()
+
+    def test_safe_distinct_transport_errors(self):
+        cases=[(TimeoutError('private detail'),'provider_timeout'),(meta_client.urllib.error.URLError('private host'),'provider_connection_failed')]
+        for failure,expected in cases:
+            with self.subTest(expected=expected),patch.dict(os.environ,{'BASETEN_API_KEY':'private-test'}),patch.object(meta_client.urllib.request,'urlopen',side_effect=failure),patch.object(meta_client,'record') as record:
+                with self.assertRaises(meta_client.MetaError) as caught:meta_client.complete_json('test','private invoice',{}, {},provider='baseten')
+                self.assertEqual(caught.exception.code,expected)
+                self.assertNotIn('private',str(record.call_args))
+    def test_malformed_response_is_not_reported_as_network_failure(self):
+        response=io.BytesIO(b'not json');response.headers={}
+        with patch.dict(os.environ,{'BASETEN_API_KEY':'private-test'}),patch.object(meta_client.urllib.request,'urlopen',return_value=response),patch.object(meta_client,'record'):
+            with self.assertRaises(meta_client.MetaError) as caught:meta_client.complete_json('test','test',{}, {},provider='baseten')
+        self.assertEqual(caught.exception.code,'invalid_provider_response')

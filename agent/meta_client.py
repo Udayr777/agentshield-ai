@@ -1,5 +1,5 @@
 """Bounded Meta JSON calls. Telemetry contains no prompts, answers or credentials."""
-import json, os, time, threading, urllib.request, urllib.error
+import json, os, time, threading, socket, ssl, urllib.request, urllib.error
 from pathlib import Path
 
 LOCK=threading.Lock()
@@ -58,6 +58,14 @@ def complete_json(purpose,instruction,evidence,schema,image=None,model_override=
         code={400:'invalid_request',401:'authentication_failed',402:'billing_unavailable',403:'permission_denied',404:'model_or_endpoint_missing',429:'rate_limited'}.get(error.code,'provider_unavailable')
         meta['error_code']=code;raise MetaError(code) from None
     except MetaError as error:meta['error_code']=error.code;raise
-    except Exception:meta['error_code']='network_or_invalid_response';raise MetaError('network_or_invalid_response') from None
+    except (TimeoutError,socket.timeout):
+        meta['error_code']='provider_timeout';raise MetaError('provider_timeout') from None
+    except urllib.error.URLError as error:
+        reason=error.reason
+        code='provider_timeout' if isinstance(reason,(TimeoutError,socket.timeout)) else 'tls_connection_failed' if isinstance(reason,ssl.SSLError) else 'provider_connection_failed'
+        meta['error_code']=code;raise MetaError(code) from None
+    except (json.JSONDecodeError,UnicodeDecodeError,KeyError,IndexError,TypeError,AttributeError):
+        meta['error_code']='invalid_provider_response';raise MetaError('invalid_provider_response') from None
+    except Exception:meta['error_code']='unexpected_client_error';raise MetaError('unexpected_client_error') from None
     finally:
         meta['latency_ms']=round((time.perf_counter()-start)*1000,2);record(meta)
