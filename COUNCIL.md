@@ -40,3 +40,7 @@ The live check creates a synthetic account and a private clean PDF, verifies mod
 Recorded development validation: all 27 Python tests, Go tests and the production UI build passed. The live acceptance check passed 11/11 assertions against Neon using `muse-spark-1.3`. Reviewer latencies were Audit 4.60 s, Policy 2.77 s and Forensics 2.36 s, with reported totals of 2,093, 1,454 and 3,120 tokens respectively. These are one-run observations, not latency guarantees or detection-accuracy estimates. The normal risk call was additional. Docker/cloud redeployment and visual browser review are separate checks.
 
 Future roadmap only: real financial connectors, federated threat distribution and hardware enclave execution. No real banking calls, escrow, biometric authorization, enclave protection or global immunity is implemented.
+
+## Earlier-policy skips
+
+The council panel checks the selected invoice before enabling its run button. When shared synthetic threat matching or an owner policy already blocks it, reviewers show Skipped rather than No assessment yet. The panel identifies the source and links to the separate read-only investigation. No council model calls are made, and this skip does not enable a council requirement or remove the earlier policy. Select JUDGE-CLEAN to exercise council review, or use the investigation to examine a blocked synthetic fixture. Gmail remains excluded from both external workflows. The server repeats preflight on submission; UI state alone cannot bypass it.

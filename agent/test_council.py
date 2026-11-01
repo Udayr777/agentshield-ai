@@ -42,3 +42,14 @@ class CouncilTests(unittest.TestCase):
         with patch.object(council,'complete_json',side_effect=OSError('offline')):result=council.review({'invoice_id':self.inv['id']},self.owner,app.connect,False)
         self.assertFalse(result['gate']['satisfied']);self.assertTrue(all(r['risk']=='unknown' for r in result['signed_report']['report']['reviews']))
         result=council.disable({'invoice_id':self.inv['id']},self.owner,app.connect,False);self.assertFalse(result['gate']['required'])
+
+    def test_precheck_explains_skip_and_blocks_calls_without_enabling_council(self):
+        import threatnet
+        with patch.object(threatnet,'preflight',return_value={'blocked':True}),patch.object(council,'complete_json') as model:
+            state=council.latest(self.owner,self.inv['id'],app.connect,False)
+            self.assertTrue(state['precheck']['blocked'])
+            self.assertEqual(state['precheck']['source'],'shared_threat_network')
+            with self.assertRaises(ws.APIError) as error:council.review({'invoice_id':self.inv['id']},self.owner,app.connect,False)
+            self.assertIn('zero council model calls',str(error.exception))
+            model.assert_not_called()
+            self.assertFalse(council.latest(self.owner,self.inv['id'],app.connect,False)['gate']['required'])

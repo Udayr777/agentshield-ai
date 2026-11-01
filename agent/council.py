@@ -41,12 +41,22 @@ def gate(db,pg,owner,payment):
     satisfied=bool(valid and body.get('unanimous_low') and len(body.get('reviews',[]))==3 and {r.get('role') for r in body['reviews']}==set(ROLES) and all(r.get('risk')=='low' and r.get('status')=='complete' for r in body['reviews']))
     return {'required':True,'satisfied':satisfied,'report_id':body.get('id'),'signature_verified':bool(valid),'reason':'All three signed assessments are low risk and match the exact invoice proposal.' if satisfied else 'Council blocked: disagreement, high/unknown risk, expired evidence, changed proposal or invalid signature.'}
 
+def precheck(db,pg,owner,payment):
+    import threatnet,policy_lab
+    from gmail_link import is_gmail_invoice
+    if is_gmail_invoice(db,pg,owner,payment['invoice_id']):
+        return {'blocked':True,'source':'gmail_privacy','reason':'Gmail imports are local-only. External council and investigation are disabled.'}
+    for source,result in (('shared_threat_network',threatnet.preflight(db,pg,owner,payment)),('owner_policy',policy_lab.preflight(db,pg,owner,payment))):
+        if result['blocked']:
+            return {'blocked':True,'source':source,'reason':'Earlier policy matched this invoice. Council review is skipped; zero council model calls. Use the separate read-only investigation for an explanation, or select JUDGE-CLEAN to test council review.'}
+    return {'blocked':False,'source':'none','reason':'No earlier policy currently blocks council review. The server checks again when you run it.'}
+
 def latest(owner,ident,connect,pg):
     with connect() as db:
         values,_,_=facts(db,pg,owner,ident)
         row=ws.query(db,'SELECT payload,status FROM council_runs WHERE owner_id=? AND invoice_id=? ORDER BY created_at DESC,id DESC LIMIT 1',(owner,ident),pg).fetchone()
         payment={'invoice_id':ident,'recipient':values['recipient'],'amount_cents':values['amount_cents'],'invoice':values['text']}
-        return {'gate':gate(db,pg,owner,payment),'signed_report':json.loads(row[0]) if row and row[0] else None,'run_status':row[1] if row else 'not_run'}
+        return {'precheck':precheck(db,pg,owner,payment),'gate':gate(db,pg,owner,payment),'signed_report':json.loads(row[0]) if row and row[0] else None,'run_status':row[1] if row else 'not_run'}
 
 def disable(data,owner,connect,pg):
     ident=data.get('invoice_id','')
@@ -65,7 +75,8 @@ def review(data,owner,connect,pg):
             if is_gmail_invoice(db,pg,owner,ident):raise ws.APIError(403,'Gmail imports are local-only. Muse council processing is disabled for these documents.')
             import threatnet,policy_lab
             proposal={'invoice_id':ident,'invoice':values['text'],'recipient':values['recipient'],'amount_cents':values['amount_cents']}
-            if threatnet.preflight(db,pg,owner,proposal)['blocked'] or policy_lab.preflight(db,pg,owner,proposal)['blocked']:raise ws.APIError(409,'A pre-model shared or owner policy blocked this proposal. No council calls were made.')
+            check=precheck(db,pg,owner,{'invoice_id':ident,**proposal})
+            if check['blocked']:raise ws.APIError(409,check['reason'])
             recent=ws.query(db,'SELECT created_at FROM council_runs WHERE owner_id=? AND created_at>?',(owner,now-3600),pg).fetchall()
             total=ws.query(db,'SELECT COUNT(*) FROM council_runs WHERE created_at>?',(now-3600,),pg).fetchone()[0]
             if len(recent)>=3 or any(r[0]>now-60 for r in recent) or total>=10:raise ws.APIError(429,'Council budget reached: one per minute, three per account/hour, ten globally/hour. Failed runs count too.')
