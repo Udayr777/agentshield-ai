@@ -1,0 +1,14 @@
+{
+  "asset": "zivvi-wave-sheet.png",
+  "sha256": "09ac5f7d888c561808439e2b6fa73d8d8c02b2d0267e0d068a56a55485e49e2a",
+  "source_character": "guide-muse.png (original Muse Image artwork)",
+  "pose_sheet_creation": "OpenAI built-in image generation/edit tool, derived from original character reference",
+  "layout": {
+    "columns": 3,
+    "rows": 2,
+    "frame_width": 512,
+    "frame_height": 512
+  },
+  "runtime": "Local pose playback; no live inference; not a rigged 3D model",
+  "created_on": "2026-10-31"
+}
