@@ -4,9 +4,9 @@
 .muse-art-ready>:not(.muse-hero-art){display:none!important}
 .landing-paused .muse-hero-art{animation-play-state:paused}
 .muse-art-credit{display:block;padding:7px 18px;color:#536482;background:#f5f2fc;font-size:10px;line-height:1.5}
-.empty-invoice-workspace.muse-welcome{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;align-items:center;text-align:left;padding:28px}
-.muse-welcome-art{width:100%;aspect-ratio:1;object-fit:contain;border-radius:18px}
-.muse-welcome-copy h2{margin-top:8px}
+.empty-invoice-workspace.muse-welcome{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:center;align-self:start;text-align:left;padding:24px;width:100%;max-width:1000px;min-height:0;height:auto;box-sizing:border-box}
+.muse-welcome-art{display:block;width:100%;height:auto;max-width:200px;aspect-ratio:1;object-fit:contain;border-radius:18px;align-self:center}
+.muse-welcome-copy{min-width:0}.muse-welcome-copy h2{margin:8px 0}.muse-welcome-copy p{margin:8px 0}
 .muse-welcome-copy .fine-print{display:block;margin-top:12px}
 @keyframes muse-art-breathe{50%{transform:translateY(-5px) scale(1.015)}}
 @media(max-width:800px){.empty-invoice-workspace.muse-welcome{grid-template-columns:150px minmax(0,1fr);gap:18px;padding:20px}}
