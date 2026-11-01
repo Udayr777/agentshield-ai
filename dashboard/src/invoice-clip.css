@@ -9,3 +9,8 @@
 .invoice-clip canvas{width:100%;max-width:760px;height:auto;aspect-ratio:16/9;margin:16px auto;border-radius:12px}
 .invoice-clip .clip-actions,.invoice-clip .clip-audio-controls,.invoice-clip .clip-caption{max-width:960px;margin-left:auto;margin-right:auto}
 @media(max-width:650px){.invoice-clip{padding:12px}.invoice-clip canvas{max-width:100%}}
+
+.invoice-clip canvas{max-width:960px;margin:14px 0}
+.invoice-clip .clip-actions,.invoice-clip .clip-audio-controls,.invoice-clip .clip-caption{max-width:none;margin-left:0;margin-right:0}
+.invoice-clip>p{margin-top:10px;margin-bottom:12px}
+.invoice-clip .clip-audio-controls{gap:12px;padding:12px;margin-top:12px;margin-bottom:12px}
