@@ -7,7 +7,7 @@ import workspace as ws
 import visual, lifecycle as lc
 import ledger, judge, helpdesk, council, gmail_link as gmail
 import threatnet,policy_lab,escrow
-import inspection,password_reset,decision_insight
+import inspection,password_reset,decision_insight,investigation
 from meta_client import complete_json, MetaError, load_config
 from replay import prepare, CATALOG
 from pathlib import Path
@@ -41,7 +41,7 @@ def init():
         ws.migrate(db,bool(PG))
         visual.migrate(db)
         ledger.migrate(db);judge.migrate(db);council.migrate(db);gmail.migrate(db)
-        threatnet.migrate(db);policy_lab.migrate(db);escrow.migrate(db);password_reset.migrate(db)
+        threatnet.migrate(db);policy_lab.migrate(db);escrow.migrate(db);password_reset.migrate(db);investigation.migrate(db)
 def audit(data,owner=None):
     with LOCK, connect() as db:
         p=data.get('payment',{});owner_key=owner or '';now=int(time.time())
@@ -172,6 +172,9 @@ class Handler(BaseHTTPRequestHandler):
             if path.path=='/arena/inbox':return self.reply(200,lc.inbox(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/session': return self.reply(200,{'user':user,'mode':os.getenv('ANALYZER_MODE','mock'),'storage':'postgresql' if PG else 'sqlite'})
             if path.path=='/decisions/insight':return self.reply(200,decision_insight.get(params.get('id',[''])[0],user['id'],connect,bool(PG)))
+            if path.path=='/investigations':return self.reply(200,investigation.state(user['id'],params.get('invoice_id',[''])[0],connect,bool(PG)))
+            if path.path=='/investigations/run':return self.reply(200,investigation.public(investigation.read(params.get('id',[''])[0],user['id'],connect,bool(PG))))
+            if path.path=='/investigations/share':return self.reply(200,investigation.share(params.get('id',[''])[0],user['id'],connect,bool(PG)))
             if path.path=='/profile':return self.reply(200,ws.profile(user['id'],connect,bool(PG)))
             if path.path=='/invoices': return self.reply(200,ws.list_invoices(user['id'],connect,bool(PG)))
             if path.path=='/chat': return self.reply(200,ws.history(parse_qs(path.query).get('invoice_id',[''])[0],user['id'],connect,bool(PG),self.chat_scope()))
@@ -205,6 +208,7 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK:return self.reply(200,lc.submit(data,connect,bool(PG)))
             user=self.user();owner=user['id']
             if self.path=='/decisions/explain':return self.reply(200,decision_insight.explain(data,owner,connect,bool(PG)))
+            if self.path=='/investigations/start':return self.reply(200,investigation.start(data,owner,connect,bool(PG)))
             if self.path=='/profile':return self.reply(200,ws.profile(owner,connect,bool(PG),data))
             session_token=self.headers.get('Authorization','').removeprefix('Bearer ')
             if self.path=='/network/preferences':return self.reply(200,threatnet.set_preference(data,owner,connect,bool(PG)))

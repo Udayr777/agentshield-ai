@@ -48,7 +48,7 @@ func lifecycleRoutes(mux *http.ServeMux) {
 		}
 		respond(w, 200, v)
 	}))
-	for _, path := range []string{"/decisions/insight", "/decisions/explain", "/documents", "/documents/upload", "/documents/segment", "/documents/explain-visual", "/documents/visual-clip", "/documents/visual-fixture", "/documents/confirm", "/threats/share", "/extension/pair", "/extension/revoke", "/arena/create", "/arena/inbox"} {
+	for _, path := range []string{"/investigations", "/investigations/run", "/investigations/share", "/investigations/start", "/decisions/insight", "/decisions/explain", "/documents", "/documents/upload", "/documents/segment", "/documents/explain-visual", "/documents/visual-clip", "/documents/visual-fixture", "/documents/confirm", "/threats/share", "/extension/pair", "/extension/revoke", "/arena/create", "/arena/inbox"} {
 		p := path
 		mux.HandleFunc("/api"+p, requireSession(proxyAgent(p)))
 	}

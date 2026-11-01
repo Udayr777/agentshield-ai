@@ -12,7 +12,7 @@ def load_config(path=None):
     allowed={'ANALYZER_MODE','META_API_KEY','MODEL_API_KEY','META_MODEL','META_BASE_URL','META_MAX_COMPLETION_TOKENS','META_TIMEOUT_SECONDS','META_REASONING_EFFORT','META_SAM_MODEL','META_VISUAL_MODE','DATABASE_URL','DATABASE_URL_UNPOOLED','COOKIE_SECURE'}
     allowed.update({'LEDGER_SIGNING_KEY','LEDGER_KEY_FILE','RESEND_API_KEY','PASSWORD_RESET_FROM','APP_PUBLIC_URL'})
     allowed.update({'GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REDIRECT_URI','GMAIL_TOKEN_KEY'})
-    allowed.update({'POLICY_MODEL','WEBAUTHN_ORIGIN','EXPLANATION_ACCOUNT_HOURLY_LIMIT','EXPLANATION_GLOBAL_HOURLY_LIMIT'})
+    allowed.update({'POLICY_MODEL','WEBAUTHN_ORIGIN','EXPLANATION_ACCOUNT_HOURLY_LIMIT','EXPLANATION_GLOBAL_HOURLY_LIMIT','BASETEN_API_KEY','OPEN_WEIGHT_MODEL','INVESTIGATION_REPORT_MODEL'})
     for path in paths:
       if path.exists():
         for line in path.read_text(encoding='utf-8-sig').splitlines():
@@ -26,8 +26,9 @@ def record(meta):
         with LOCK,target.open('a',encoding='utf-8') as f:f.write(json.dumps(meta)+'\n')
     except OSError:pass # Usage diagnostics cannot turn a blocked payment into an allow.
 
-def complete_json(purpose,instruction,evidence,schema,image=None,model_override=None):
-    key=os.getenv('META_API_KEY') or os.getenv('MODEL_API_KEY')
+def complete_json(purpose,instruction,evidence,schema,image=None,model_override=None,provider=None):
+    key=os.getenv('BASETEN_API_KEY') if provider=='baseten' else os.getenv('META_API_KEY') or os.getenv('MODEL_API_KEY')
+    if provider not in (None,'baseten'):raise MetaError('unsupported_provider')
     if not key:raise MetaError('missing_key')
     model=model_override or os.getenv('META_MODEL','muse-spark-1.3');start=time.perf_counter()
     cap=max(256,min(8192,int(os.getenv('META_MAX_COMPLETION_TOKENS','2048'))))
@@ -36,14 +37,17 @@ def complete_json(purpose,instruction,evidence,schema,image=None,model_override=
           'response_format':{'type':'json_schema','json_schema':{'name':purpose,'schema':schema}},
           'max_completion_tokens':cap,'reasoning_effort':os.getenv('META_REASONING_EFFORT','low')}
     if image:body['messages'][1]['content']=[{'type':'text','text':json.dumps(evidence)},{'type':'image_url','image_url':{'url':image}}]
-    req=urllib.request.Request(os.getenv('META_BASE_URL','https://api.meta.ai/v1').rstrip('/')+'/chat/completions',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'})
-    meta={'time_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'purpose':purpose,'model':model,'status':'error','max_completion_tokens':cap}
+    if provider=='baseten':
+        body['messages'][0]['role']='system';body['max_tokens']=body.pop('max_completion_tokens')
+    endpoint='https://inference.baseten.co/v1' if provider=='baseten' else os.getenv('META_BASE_URL','https://api.meta.ai/v1').rstrip('/')
+    req=urllib.request.Request(endpoint+'/chat/completions',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'})
+    meta={'time_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'purpose':purpose,'model':model,'provider':provider or 'meta','status':'error','max_completion_tokens':cap}
     try:
         # No automatic retry: avoid hidden duplicate consumption during initial validation.
         with urllib.request.urlopen(req,timeout=timeout) as response:
             raw=json.load(response)
             meta['provider_request_id']=response.headers.get('x-request-id','') if hasattr(response,'headers') else ''
-        usage=raw.get('usage',{})
+        meta['reported_model']=raw.get('model');usage=raw.get('usage',{})
         meta['usage']={k:v for k,v in usage.items() if k in ('prompt_tokens','completion_tokens','total_tokens') and type(v) is int}
         choice=raw['choices'][0]
         if choice.get('finish_reason') not in (None,'stop'):raise MetaError('incomplete_response')

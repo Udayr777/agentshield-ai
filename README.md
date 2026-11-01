@@ -2,6 +2,8 @@
 
 Private synthetic invoices, a read-only Muse copilot, and a Go gateway that separates financial intelligence from payment authority. The application has no bank integrations and never moves real money.
 
+The bounded [investigation agent](INVESTIGATION.md) selects read-only evidence tools, optionally uses Baseten-hosted Muse Spark Open, and produces a cited Wonder storyboard. Completed synthetic Judge Demo Pack runs can prepare a sanitized share kit and locally record a real browser demo. Partner calls and Meta-only runs are labeled separately.
+
 Recorded decisions now include an original-versus-proposal comparison and an optional cited Muse explanation with a manual next step. See [Decision insights](DECISION-INSIGHTS.md). Explanations never authorize or change a simulation.
 
 For a reproducible paired risk-classification experiment using Muse Spark and Muse Wonder, see [Model comparison](MODEL-COMPARISON.md). It records correctness, abstentions, latency and token usage without changing the production gateway.

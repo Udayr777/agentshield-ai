@@ -1,5 +1,7 @@
 # Meta model usage in AgentShield
 
+Bounded investigations use the configured Meta planner for at most four allowlisted selections, Baseten-hosted Muse Spark Open for a configured advisory review, and Muse Wonder for the final cited storyboard. Partner credentials/endpoints are separate; recorded provider response metadata is displayed. No provider failure becomes a silent fallback. Missing partner configuration is labeled Meta-only. The workflow cannot approve, pay, email, browse, execute code or rewrite policy. See [Investigation](INVESTIGATION.md).
+
 Decision insights add an explicit `decision_explanation` call using verified owner-scoped receipts. Input contains recorded controls, analyzer assessment and recipient/amount differences, but no raw invoice text or approval tokens. Citations are validated; results are signed, cached and cannot change decisions. Gmail-derived receipts remain local-only. See [Decision insights](DECISION-INSIGHTS.md).
 
 An operator-only Spark-versus-Wonder comparison uses the same risk analyzer with an explicit per-call model override. It leaves `META_MODEL` and payment behavior unchanged. See [Model comparison](MODEL-COMPARISON.md) for the synthetic dataset, run command and limits.
