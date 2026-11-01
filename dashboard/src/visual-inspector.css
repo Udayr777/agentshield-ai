@@ -21,3 +21,8 @@
 .document-scroll-view .document-canvas{margin:0;box-shadow:none}
 .visual-inspector .invoice-clip{max-width:1120px;margin:18px 0 0;box-sizing:border-box}
 @media(max-width:800px){.inspection-triptych{grid-template-columns:1fr}.inspection-viewport{height:320px}.inspection-frame{max-width:none}.document-scroll-view{max-height:420px}}
+
+/* A little more reading room without returning to full-page-height cards. */
+.inspection-viewport{height:clamp(380px,48vh,460px);scrollbar-gutter:stable}
+@media(max-width:800px){.inspection-viewport{height:380px}}
+@media(max-width:540px){.inspection-viewport{height:340px}}
