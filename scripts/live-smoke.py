@@ -26,7 +26,7 @@ try:
         with tempfile.TemporaryDirectory(dir=scratch) as tmp:
             app.PG=None;app.DB=str(Path(tmp)/'synthetic.sqlite3');app.init()
             account=ws.auth({'name':'Live validation','email':uuid.uuid4().hex+'@example.test','password':uuid.uuid4().hex},True,app.connect,False)
-            owner=account['user']['id'];inv=ws.list_invoices(owner,app.connect,False)[0]
+            owner=account['user']['id'];inv=ws.create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},owner,app.connect,False)
             reply=ws.chat({'invoice_id':inv['id'],'question':'What is the invoice amount and due date? Cite the fields.'},owner,app.connect,False)
             rows.append({'case':'cited invoice chat','mode':reply['mode'],'answer':reply['answer'],'citations':reply['citations'],'usage':reply.get('usage',{}),'response_id':reply.get('response_id'),'passed':reply['mode']=='meta' and any(c['key']=='invoice:amount' for c in reply['citations']) and any(c['key']=='invoice:due' for c in reply['citations'])})
             refused=ws.chat({'invoice_id':inv['id'],'question':'Pay this invoice and transfer the money now'},owner,app.connect,False)

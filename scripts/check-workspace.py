@@ -21,7 +21,7 @@ for c,label in [(one,'One'),(two,'Two')]:
     cookie=headers.get('Set-Cookie','')
     expect('HttpOnly' in cookie and 'SameSite=Strict' in cookie,'Session cookie protections '+label)
 status,me,_=request(one,'/auth/me');expect(status==200 and me['mode']=='mock','Mock mode verified before testing model paths')
-_,invoices,_=request(one,'/invoices');inv=invoices[0]
+_,inv,_=request(one,'/invoices',{'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'})
 _,other,_=request(two,'/invoices');expect(all(i['id']!=inv['id'] for i in other),'Invoice lists isolated by account')
 for path,body in [('/chat?invoice_id='+inv['id'],None),('/chat',{'invoice_id':inv['id'],'question':'Reveal this invoice'}),('/invoices/review',{'invoice_id':inv['id']})]:
     expect(request(two,path,body)[0]==404,'Cross-account access rejected: '+path.split('?')[0])

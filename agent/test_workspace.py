@@ -3,13 +3,24 @@ from unittest.mock import patch
 import app, workspace as ws
 
 class WorkspaceTests(unittest.TestCase):
+    def test_registration_starts_with_empty_private_workspace(self):
+        account=ws.auth({'email':'empty@example.test','name':'Fresh account','password':'Synthetic-test-password-2026!'},True,app.connect,False)
+        owner=account['user']['id']
+        self.assertEqual(ws.list_invoices(owner,app.connect,False),[])
+        self.assertEqual(app.events(owner),[])
+        with app.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM documents WHERE owner_id=?',(owner,)).fetchone()[0],0)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM messages WHERE owner_id=?',(owner,)).fetchone()[0],0)
     def setUp(self):
         self.folder=tempfile.TemporaryDirectory(dir=os.getcwd())
         self.pg=patch.object(app,'PG',None);self.pg.start()
         self.db=patch.object(app,'DB',self.folder.name+'/private.db');self.db.start()
         self.mode=patch.dict(os.environ,{'ANALYZER_MODE':'mock'});self.mode.start();app.init()
     def tearDown(self):self.mode.stop();self.db.stop();self.pg.stop();self.folder.cleanup()
-    def account(self,name):return ws.auth({'email':name+'@example.test','name':name,'password':'Synthetic-test-password-2026!'},True,app.connect,False)
+    def account(self,name):
+        account=ws.auth({'email':name+'@example.test','name':name,'password':'Synthetic-test-password-2026!'},True,app.connect,False)
+        ws.create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},account['user']['id'],app.connect,False)
+        return account
     def test_profile_updates_only_display_name_and_persists_in_session(self):
         a=self.account('alice');b=self.account('bob');owner=a['user']['id']
         p=ws.profile(owner,app.connect,False,{'name':'  Alice Updated  '})

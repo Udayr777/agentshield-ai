@@ -38,8 +38,6 @@ def auth(data,register,connect,pg):
             ident,name=row[0],row[1]
         token=secrets.token_urlsafe(32)
         query(db,'INSERT INTO sessions (token_hash,user_id,expires_at) VALUES (?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),ident,int(time.time())+28800),pg)
-    if register:
-        create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},ident,connect,pg)
     return {'token':token,'user':{'id':ident,'name':name,'email':email}}
 
 def session(token,connect,pg):

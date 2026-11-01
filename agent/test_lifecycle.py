@@ -7,7 +7,7 @@ import time
 class LifecycleTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(dir=os.getcwd());self.pg=patch.object(app,'PG',None);self.pg.start();self.db=patch.object(app,'DB',self.temp.name+'/test.db');self.db.start();self.mode=patch.dict(os.environ,{'ANALYZER_MODE':'mock'});self.mode.start();app.init()
-        a=ws.auth({'name':'Visual tester','email':'tester@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False);self.owner=a['user']['id'];self.token=a['token']
+        a=ws.auth({'name':'Visual tester','email':'tester@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False);self.owner=a['user']['id'];self.token=a['token'];ws.create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},self.owner,app.connect,False)
     def tearDown(self):self.mode.stop();self.db.stop();self.pg.stop();self.temp.cleanup()
     def fixture(self,attack=False):
         path=Path(__file__).resolve().parents[1]/'samples'/('synthetic-hidden-injection.pdf' if attack else 'synthetic-invoice.pdf')

@@ -12,7 +12,10 @@ class FrontierTests(unittest.TestCase):
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.temp.cleanup()
-    def account(self,name):return ws.auth({'name':name,'email':name+'@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False)
+    def account(self,name):
+        account=ws.auth({'name':name,'email':name+'@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False)
+        ws.create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},account['user']['id'],app.connect,False)
+        return account
     def payment(self,owner,invoice):return ws.invoice_prepare({'invoice_id':invoice},owner,app.connect,False)['payment']
     def test_two_accounts_share_only_synthetic_categories_and_skip_model(self):
         for account in (self.a,self.b):threatnet.set_preference({'enabled':True},account['user']['id'],app.connect,False)

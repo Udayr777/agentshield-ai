@@ -9,7 +9,7 @@ def request(path,data=None):
 request('/auth/register',{'name':'Live HTTP validation','email':'live-http-'+uuid.uuid4().hex+'@example.test','password':secrets.token_urlsafe(24)})
 me=request('/auth/me')
 if me['mode']!='meta':raise SystemExit('The running agent is not in meta mode. No model calls made.')
-invoice=request('/invoices')[0];start=time.perf_counter()
+invoice=request('/invoices',{'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'});start=time.perf_counter()
 receipt=request('/invoices/review',{'invoice_id':invoice['id']})
 review_ms=round((time.perf_counter()-start)*1000,2)
 chat=request('/chat',{'invoice_id':invoice['id'],'question':'What amount and due date are recorded for this invoice? Cite the evidence.'})

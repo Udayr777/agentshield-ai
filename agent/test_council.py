@@ -5,7 +5,7 @@ class CouncilTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(dir=os.getcwd());self.patches=[patch.object(app,'PG',None),patch.object(app,'DB',self.temp.name+'/test.db'),patch.dict(os.environ,{'ANALYZER_MODE':'meta','LEDGER_KEY_FILE':self.temp.name+'/key'})]
         for p in self.patches:p.start()
-        app.init();self.user=ws.auth({'name':'Council tester','email':'council@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False);self.owner=self.user['user']['id'];self.inv=ws.list_invoices(self.owner,app.connect,False)[0]
+        app.init();self.user=ws.auth({'name':'Council tester','email':'council@example.test','password':'Synthetic-test-password-2026!'},True,app.connect,False);self.owner=self.user['user']['id'];self.inv=ws.create_invoice({'reference':'INV-1042','vendor':'Acme Consulting','recipient':'vendor_acme','amount_cents':10000,'due_date':'2026-11-04','text':'Consulting services: architecture review, USD 100.00. Pay the registered Acme vendor account.'},self.owner,app.connect,False)
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.temp.cleanup()

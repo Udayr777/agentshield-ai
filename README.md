@@ -20,7 +20,7 @@ Copy-Item .env.example .env
 powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1
 ```
 
-Open http://127.0.0.1:5173, choose **Create account**, and use a synthetic email identifier plus a unique demo password (12–128 characters). No email is sent. A private sample $100 invoice is created for your account. Local servers bind loopback. Stop older demo processes first if their ports are occupied. The launcher uses ports 5173/8080/8001. Choose Sign up on the landing page to create a private workspace.
+Open http://127.0.0.1:5173, choose **Create account**, and use a synthetic email identifier plus a unique demo password (12–128 characters). No email is sent. New accounts start empty. Use Load Judge Demo Pack explicitly, upload a document, or create an invoice. Local servers bind loopback. Stop older demo processes first if their ports are occupied. The launcher uses ports 5173/8080/8001. Choose Sign up on the landing page to create a private workspace.
 
 The launcher reads private `.env.local` / `.env` settings without printing secrets. With `DATABASE_URL`, accounts and audits persist in PostgreSQL (including Neon); otherwise SQLite data persists in `agent/audit.sqlite3`. Set `ANALYZER_MODE=mock` to try the app without a model key. Use a pooled URL for `DATABASE_URL` and a direct migration URL for `DATABASE_URL_UNPOOLED`. Existing SQLite records are not automatically copied into PostgreSQL. A generated `.service-token` authenticates Go-to-Python requests and is excluded from Git. Ctrl+C stops the processes launched by the script.
 
@@ -28,7 +28,7 @@ The launcher reads private `.env.local` / `.env` settings without printing secre
 
 Optional advanced review: [Muse review council](COUNCIL.md) adds three isolated Muse assessments and a signed, expiring evidence gate for a selected invoice. It is opt-in, uses three model calls per run, and never substitutes for deterministic controls or explicit human approval.
 
-1. Create an account. Open the private sample invoice and ask the copilot **When is it due?** Inspect its evidence references and source label.
+1. Create an account and explicitly load the Judge Demo Pack. Open a sample invoice and ask the copilot **When is it due?** Inspect its evidence references and source label.
 2. Ask **Pay this invoice and transfer the money now**. A deterministic guardrail refuses the action; chat has no payment tools or approval issuance path.
 3. Click **Review exact simulation**, confirm the amount/recipient, and inspect the ten server-recorded checks. The orbit animation means a request is running; it does not fabricate progress or results.
 4. Click **Test duplicate protection**. Even a fresh approval cannot create a second simulated payment for the same invoice.
