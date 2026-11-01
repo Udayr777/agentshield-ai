@@ -19,7 +19,9 @@ def status():return {'configured':config() is not None}
 def deliver(email,token,settings):
     origin,sender=settings
     link=origin+'/#reset-password?token='+token
-    body={'from':sender,'to':[email],'subject':'Reset your AgentShield password','text':'You requested an AgentShield AI password reset. This link expires in 15 minutes and can be used once:\n\n'+link+'\n\nIf you did not request this, ignore this email. Your password has not changed. Never share the reset link.'}
+    from recovery_email import content
+    text,html=content(link)
+    body={'from':sender,'to':[email],'subject':'Reset your AgentShield password','text':text,'html':html}
     req=urllib.request.Request('https://api.resend.com/emails',json.dumps(body).encode(),{'Authorization':'Bearer '+os.environ['RESEND_API_KEY'],'Content-Type':'application/json','User-Agent':'AgentShield-Recovery/1.0'})
     with urllib.request.urlopen(req,timeout=15) as response:
         if response.status not in (200,201,202):raise ValueError('Email rejected')

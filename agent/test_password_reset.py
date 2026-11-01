@@ -2,6 +2,20 @@ import hashlib,os,tempfile,time,unittest
 from unittest.mock import patch
 import app,workspace as ws,password_reset as reset
 class ResetTests(unittest.TestCase):
+    def test_branded_email_has_escaped_link_and_text_fallback(self):
+        from recovery_email import content
+        text,html=content('https://shield.example.test/#reset-password?token=preview&x="quoted"')
+        self.assertIn('Reset my password',html);self.assertIn('AgentShield AI',html)
+        self.assertIn('&amp;x=&quot;quoted&quot;',html);self.assertIn('15 minutes',text)
+        self.assertIn('Your password has not changed',text)
+        self.assertNotIn('<script',html);self.assertNotIn('<img',html)
+        with patch.object(reset.urllib.request,'urlopen') as send:
+            send.return_value.__enter__.return_value.status=200
+            reset.deliver('reset@example.test','preview-token',('https://shield.example.test','noreply@example.test'))
+            import json
+            body=json.loads(send.call_args.args[0].data)
+            self.assertTrue(body['html']);self.assertTrue(body['text']);self.assertEqual(body['subject'],'Reset your AgentShield password')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(dir=os.getcwd());self.patches=[patch.object(app,'PG',None),patch.object(app,'DB',self.temp.name+'/test.db'),patch.dict(os.environ,{'RESEND_API_KEY':'test-only','PASSWORD_RESET_FROM':'AgentShield <noreply@example.test>','APP_PUBLIC_URL':'https://shield.example.test'})]
         for p in self.patches:p.start()
