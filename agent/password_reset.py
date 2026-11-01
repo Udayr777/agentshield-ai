@@ -33,9 +33,11 @@ def request(data,connect,pg):
         if pg:db.execute('SELECT pg_advisory_xact_lock(4815162348)')
         db.execute('DELETE FROM reset_requests WHERE created_at<'+str(now-86400))
         db.execute('DELETE FROM password_resets WHERE expires_at<'+str(now-86400))
-        if ws.query(db,'SELECT COUNT(*) FROM reset_requests WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20 or ws.query(db,'SELECT id FROM reset_requests WHERE email_hash=? AND created_at>?',(digest,now-900),pg).fetchone():return dict(GENERIC)
+        row=ws.query(db,'SELECT id,created_at FROM users WHERE email=?',(email,),pg).fetchone()
+        # Requests made before registration must not suppress the new account's first recovery.
+        cutoff=max(now-900,row[1]-1) if row else now-900
+        if ws.query(db,'SELECT COUNT(*) FROM reset_requests WHERE created_at>?',(now-3600,),pg).fetchone()[0]>=20 or ws.query(db,'SELECT id FROM reset_requests WHERE email_hash=? AND created_at>?',(digest,cutoff),pg).fetchone():return dict(GENERIC)
         ws.query(db,'INSERT INTO reset_requests(id,email_hash,created_at) VALUES (?,?,?)',(secrets.token_hex(16),digest,now),pg)
-        row=ws.query(db,'SELECT id FROM users WHERE email=?',(email,),pg).fetchone()
         if row:
             token=secrets.token_urlsafe(32);token_hash=hashlib.sha256(token.encode()).hexdigest()
             ws.query(db,'UPDATE password_resets SET used=1 WHERE owner_id=?',(row[0],),pg)

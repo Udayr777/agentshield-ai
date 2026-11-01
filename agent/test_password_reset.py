@@ -35,3 +35,12 @@ class ResetTests(unittest.TestCase):
         with patch.dict(os.environ,{'APP_PUBLIC_URL':'https://evil.example/path'}):
             self.assertFalse(reset.status()['configured'])
             with self.assertRaises(ws.APIError):reset.request({'email':'reset@example.test'},app.connect,False)
+    def test_pre_registration_request_does_not_block_new_account(self):
+        with app.connect() as db:
+            created=db.execute('SELECT created_at FROM users WHERE email=?',('reset@example.test',)).fetchone()[0]
+            db.execute('INSERT INTO reset_requests(id,email_hash,created_at) VALUES (?,?,?)',('before-registration',hashlib.sha256(b'reset@example.test').hexdigest(),created-60))
+        with patch.object(reset,'deliver') as mail:
+            reset.request({'email':'reset@example.test'},app.connect,False)
+            self.assertEqual(mail.call_count,1)
+            reset.request({'email':'reset@example.test'},app.connect,False)
+            self.assertEqual(mail.call_count,1)
