@@ -1,0 +1,291 @@
+{
+  "rounds": 5,
+  "requests": 35,
+  "correct": 35,
+  "p50_ms": 71.2668999331072,
+  "p95_ms": 100.03580001648515,
+  "platform": "Windows-11-10.0.26300-SP0",
+  "measurement": "Sequential HTTP round trip including durable audit; no warmup",
+  "results": [
+    {
+      "scenario": "Authorized payment",
+      "expected": "allow",
+      "actual": "allow",
+      "mode": "mock",
+      "latency_ms": 71.2668999331072,
+      "id": "1793505284195113700"
+    },
+    {
+      "scenario": "Invoice account takeover",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 52.84120002761483,
+      "id": "1793505284251502500"
+    },
+    {
+      "scenario": "Amount escalation",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 50.84340006578714,
+      "id": "1793505284303030300"
+    },
+    {
+      "scenario": "Forged approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 48.20379999000579,
+      "id": "1793505284350617800"
+    },
+    {
+      "scenario": "Policy override injection",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 45.64969998318702,
+      "id": "1793505284395669600"
+    },
+    {
+      "scenario": "Approval replay",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 50.59809994418174,
+      "id": "1793505284444158700"
+    },
+    {
+      "scenario": "Expired approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 51.055400050245225,
+      "id": "1793505284495602900"
+    },
+    {
+      "scenario": "Authorized payment",
+      "expected": "allow",
+      "actual": "allow",
+      "mode": "mock",
+      "latency_ms": 50.6433000555262,
+      "id": "1793505284543800200"
+    },
+    {
+      "scenario": "Invoice account takeover",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 49.46640005800873,
+      "id": "1793505284594869300"
+    },
+    {
+      "scenario": "Amount escalation",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 52.31289996299893,
+      "id": "1793505284644369200"
+    },
+    {
+      "scenario": "Forged approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 78.26749992091209,
+      "id": "1793505284722058200"
+    },
+    {
+      "scenario": "Policy override injection",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 51.539700012654066,
+      "id": "1793505284772558400"
+    },
+    {
+      "scenario": "Approval replay",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 52.892399951815605,
+      "id": "1793505284825145600"
+    },
+    {
+      "scenario": "Expired approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 67.33119999989867,
+      "id": "1793505284890634800"
+    },
+    {
+      "scenario": "Authorized payment",
+      "expected": "allow",
+      "actual": "allow",
+      "mode": "mock",
+      "latency_ms": 81.75040001515299,
+      "id": "1793505284966663100"
+    },
+    {
+      "scenario": "Invoice account takeover",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 68.25169990770519,
+      "id": "1793505285033878600"
+    },
+    {
+      "scenario": "Amount escalation",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 68.06540000252426,
+      "id": "1793505285097770200"
+    },
+    {
+      "scenario": "Forged approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 100.03580001648515,
+      "id": "1793505285195249300"
+    },
+    {
+      "scenario": "Policy override injection",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 75.7236999925226,
+      "id": "1793505285271063600"
+    },
+    {
+      "scenario": "Approval replay",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 88.6225999565795,
+      "id": "1793505285348365600"
+    },
+    {
+      "scenario": "Expired approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 71.31969998590648,
+      "id": "1793505285434445800"
+    },
+    {
+      "scenario": "Authorized payment",
+      "expected": "allow",
+      "actual": "allow",
+      "mode": "mock",
+      "latency_ms": 69.91890002973378,
+      "id": "1793505285501985300"
+    },
+    {
+      "scenario": "Invoice account takeover",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 66.59109995234758,
+      "id": "1793505285572516800"
+    },
+    {
+      "scenario": "Amount escalation",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 87.44089992251247,
+      "id": "1793505285652836800"
+    },
+    {
+      "scenario": "Forged approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 86.75520005635917,
+      "id": "1793505285744081400"
+    },
+    {
+      "scenario": "Policy override injection",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 67.07220000680536,
+      "id": "1793505285810365600"
+    },
+    {
+      "scenario": "Approval replay",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 75.01170004252344,
+      "id": "1793505285878640800"
+    },
+    {
+      "scenario": "Expired approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 100.17620003782213,
+      "id": "1793505285978452300"
+    },
+    {
+      "scenario": "Authorized payment",
+      "expected": "allow",
+      "actual": "allow",
+      "mode": "mock",
+      "latency_ms": 78.80259992089123,
+      "id": "1793505286055395800"
+    },
+    {
+      "scenario": "Invoice account takeover",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 77.91350001934916,
+      "id": "1793505286135003100"
+    },
+    {
+      "scenario": "Amount escalation",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 94.53770006075501,
+      "id": "1793505286225068900"
+    },
+    {
+      "scenario": "Forged approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 82.81669998541474,
+      "id": "1793505286305949900"
+    },
+    {
+      "scenario": "Policy override injection",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 76.69590006116778,
+      "id": "1793505286385802800"
+    },
+    {
+      "scenario": "Approval replay",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 110.28150003403425,
+      "id": "1793505286488844800"
+    },
+    {
+      "scenario": "Expired approval",
+      "expected": "deny",
+      "actual": "deny",
+      "mode": "mock",
+      "latency_ms": 92.87379996385425,
+      "id": "1793505286575297800"
+    }
+  ]
+}

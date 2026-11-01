@@ -145,3 +145,13 @@ Before sign-in, the landing page groups capabilities under Inspect, Explain, Def
 Open My profile in the top bar or View your profile in the sidebar. The authenticated profile shows display name, read-only sign-in email, membership date and active session count. Only display-name updates are accepted and are scoped to the server-resolved account. The sidebar has a full-width Sign out button with a loading state; successful sign-out revokes the current session and extension pairings and returns to Sign in.
 
 Zivvi greets pointer hover and keyboard focus with a shared illustrated wave; reduced-motion settings suppress movement. Email password recovery links are available publicly and from the profile. See [Password recovery setup](PASSWORD-RECOVERY.md) for Resend sender configuration and reset-flow limits. Email delivery remains disabled until provider credentials and a trusted app origin are configured.
+
+## Judge-ready evidence
+
+Use **Start judge demo** in the signed-in Invoice workspace for the guided clean invoice, recipient-swap, denial and explanation flow. Explicit simulation confirmation remains required.
+
+- [Measured synthetic benchmarks](BENCHMARK-REPORT.md)
+- [Build timeline and eligibility disclosure](BUILD-TIMELINE.md)
+- [Provider integration and investigation scope](INVESTIGATION.md)
+
+Organizer eligibility confirmation remains pending; commit timestamps alone do not establish original authorship dates.

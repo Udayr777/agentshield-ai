@@ -11,21 +11,21 @@
       "label": "clean",
       "family": "clean",
       "findings": [],
-      "local_inspection_ms": 149.94
+      "local_inspection_ms": 58.29
     },
     {
       "fixture": "clean-2.pdf",
       "label": "clean",
       "family": "clean",
       "findings": [],
-      "local_inspection_ms": 69.17
+      "local_inspection_ms": 21.9
     },
     {
       "fixture": "clean-3.pdf",
       "label": "clean",
       "family": "clean",
       "findings": [],
-      "local_inspection_ms": 55.6
+      "local_inspection_ms": 22.29
     },
     {
       "fixture": "white_text-1.pdf",
@@ -35,7 +35,7 @@
         "low_contrast",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 64.79
+      "local_inspection_ms": 24.18
     },
     {
       "fixture": "white_text-2.pdf",
@@ -45,7 +45,7 @@
         "low_contrast",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 66.57
+      "local_inspection_ms": 24.25
     },
     {
       "fixture": "white_text-3.pdf",
@@ -55,7 +55,7 @@
         "low_contrast",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 51.27
+      "local_inspection_ms": 30.13
     },
     {
       "fixture": "tiny_text-1.pdf",
@@ -64,7 +64,7 @@
       "findings": [
         "tiny_text"
       ],
-      "local_inspection_ms": 52.43
+      "local_inspection_ms": 23.92
     },
     {
       "fixture": "tiny_text-2.pdf",
@@ -73,7 +73,7 @@
       "findings": [
         "tiny_text"
       ],
-      "local_inspection_ms": 46.3
+      "local_inspection_ms": 27.58
     },
     {
       "fixture": "tiny_text-3.pdf",
@@ -82,7 +82,7 @@
       "findings": [
         "tiny_text"
       ],
-      "local_inspection_ms": 64.9
+      "local_inspection_ms": 26.78
     },
     {
       "fixture": "invisible_layer-1.pdf",
@@ -92,7 +92,7 @@
         "invisible_text_layer",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 70.65
+      "local_inspection_ms": 27.86
     },
     {
       "fixture": "invisible_layer-2.pdf",
@@ -102,7 +102,7 @@
         "invisible_text_layer",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 52.7
+      "local_inspection_ms": 23.92
     },
     {
       "fixture": "invisible_layer-3.pdf",
@@ -112,7 +112,7 @@
         "invisible_text_layer",
         "render_visibility_mismatch"
       ],
-      "local_inspection_ms": 56.42
+      "local_inspection_ms": 29.96
     },
     {
       "fixture": "overlap-1.pdf",
@@ -121,7 +121,7 @@
       "findings": [
         "overlapping_text"
       ],
-      "local_inspection_ms": 55.35
+      "local_inspection_ms": 29.07
     },
     {
       "fixture": "overlap-2.pdf",
@@ -130,7 +130,7 @@
       "findings": [
         "overlapping_text"
       ],
-      "local_inspection_ms": 65.92
+      "local_inspection_ms": 23.86
     },
     {
       "fixture": "overlap-3.pdf",
@@ -139,7 +139,7 @@
       "findings": [
         "overlapping_text"
       ],
-      "local_inspection_ms": 84.64
+      "local_inspection_ms": 26.41
     }
   ]
 }
