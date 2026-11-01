@@ -27,3 +27,13 @@ class PartnerTransportTests(unittest.TestCase):
         with patch.dict(os.environ,{'BASETEN_API_KEY':'private-test'}),patch.object(meta_client.urllib.request,'urlopen',return_value=response),patch.object(meta_client,'record'):
             with self.assertRaises(meta_client.MetaError) as caught:meta_client.complete_json('test','test',{}, {},provider='baseten')
         self.assertEqual(caught.exception.code,'invalid_provider_response')
+
+    def test_fenced_json_empty_refusal_and_invalid_model_json(self):
+        cases=[({'content':'```json\n{"action":"finish"}\n```'},None),({'content':''},'empty_provider_content'),({'content':None,'refusal':'untrusted text'},'provider_refusal'),({'content':'prose {"action":"finish"}'},'invalid_model_json')]
+        for message,expected in cases:
+            response=io.BytesIO(json.dumps({'choices':[{'finish_reason':'stop','message':message}]}).encode());response.headers={}
+            with self.subTest(expected=expected),patch.dict(os.environ,{'BASETEN_API_KEY':'private-test'}),patch.object(meta_client.urllib.request,'urlopen',return_value=response),patch.object(meta_client,'record'):
+                if expected:
+                    with self.assertRaises(meta_client.MetaError) as caught:meta_client.complete_json('test','test',{}, {},provider='baseten')
+                    self.assertEqual(caught.exception.code,expected)
+                else:self.assertEqual(meta_client.complete_json('test','test',{}, {},provider='baseten')[0],{'action':'finish'})

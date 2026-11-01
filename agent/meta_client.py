@@ -51,7 +51,16 @@ def complete_json(purpose,instruction,evidence,schema,image=None,model_override=
         meta['usage']={k:v for k,v in usage.items() if k in ('prompt_tokens','completion_tokens','total_tokens') and type(v) is int}
         choice=raw['choices'][0]
         if choice.get('finish_reason') not in (None,'stop'):raise MetaError('incomplete_response')
-        result=json.loads(choice['message']['content'])
+        message=choice['message']
+        if message.get('refusal'):raise MetaError('provider_refusal')
+        content=message.get('content')
+        if not isinstance(content,str) or not content.strip():raise MetaError('empty_provider_content')
+        content=content.strip()
+        # Accept only a complete JSON code fence, never prose or partial JSON repair.
+        if content.startswith('```json\n') and content.endswith('```'):content=content[8:-3].strip()
+        elif content.startswith('```\n') and content.endswith('```'):content=content[4:-3].strip()
+        try:result=json.loads(content)
+        except json.JSONDecodeError:raise MetaError('invalid_model_json') from None
         if not isinstance(result,dict):raise MetaError('invalid_response')
         meta['status']='ok';meta['response_id']=raw.get('id','');return result,meta
     except urllib.error.HTTPError as error:
