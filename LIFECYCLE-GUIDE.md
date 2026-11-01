@@ -76,9 +76,3 @@ python scripts/check-lifecycle.py --url http://127.0.0.1:8080
 Add `--live` only when prepared for up to three synthetic model calls: Muse extraction, SAM segmentation and one arena risk analysis. The standard local launcher now manages a project `.venv` and installs document dependencies. Fixture regeneration optionally requires ReportLab; the PDFs/PNGs are already provided in `samples/`.
 
 The authored preview uses gateway 8083; the launcher uses 8080 and Compose uses 8082. Docker configuration validates, but PostgreSQL/Compose runtime is still unverified because this session cannot access Docker. Keep the application local until identity, upload-parser isolation, moderation, proxy limits, HTTPS and secrets are reviewed for public hosting. Review third-party dependency licensing before publishing.
-
-## Unified invoice and Chaos workspace
-
-The Invoice workspace shows the owned source document (when linked among the latest 50 saved drafts) beside the Chaos preset and plain-text proposal delta. Saved extraction candidates and completed SAM boxes are labeled separately; layouts do not certify authenticity. Manual invoices retain recorded fields and text without invented geometry.
-
-Enable the sandbox, inspect the proposed recipient/amount/text or approval mutation, and explicitly launch the simulated review. The preview is not a server decision. After the receipt returns, the result banner lists all failed controls and the exploded pipeline exposes recorded enforcement evidence. No node is marked passed while waiting. Expand **Security observatory, receipt export & Muse explanation** for full details. Council and investigation are grouped under **Optional deep review** below the explicit simulation control. No API contract, approval rule or payment authority changed.
