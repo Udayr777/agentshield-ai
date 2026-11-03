@@ -1,3 +1,8 @@
+param(
+ [ValidateRange(1024,65535)][int]$DashboardPort = 5173,
+ [ValidateRange(1024,65535)][int]$GatewayPort = 8080,
+ [ValidateRange(1024,65535)][int]$AgentPort = 8001
+)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $agentDir = Join-Path $projectRoot 'agent'
@@ -23,11 +28,17 @@ if (Test-Path $envPath) {
 Push-Location $gatewayDir
 try { go build -buildvcs=false -o gateway.exe .; if ($LASTEXITCODE -ne 0) { throw 'Go build failed' } } finally { Pop-Location }
 if (!(Test-Path (Join-Path $dashboardDir 'node_modules'))) { Push-Location $dashboardDir; try { npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' } } finally { Pop-Location } }
+$env:AGENT_PORT = [string]$AgentPort
+$env:AGENT_BIND = '127.0.0.1'
+$env:AGENT_URL = "http://127.0.0.1:$AgentPort"
+$env:GATEWAY_ADDR = "127.0.0.1:$GatewayPort"
+$env:GATEWAY_URL = "http://127.0.0.1:$GatewayPort"
+$env:COOKIE_SECURE = 'false'
 $processes = @()
 try {
  $processes += Start-Process $pythonExe -ArgumentList 'app.py' -WorkingDirectory $agentDir -WindowStyle Hidden -PassThru
  $processes += Start-Process (Join-Path $gatewayDir 'gateway.exe') -WorkingDirectory $gatewayDir -WindowStyle Hidden -PassThru
- $processes += Start-Process 'cmd.exe' -ArgumentList '/c npm.cmd run dev' -WorkingDirectory $dashboardDir -WindowStyle Hidden -PassThru
- Write-Host 'AgentShield: http://127.0.0.1:5173 — Ctrl+C to stop. Uses SQLite unless DATABASE_URL is set. .env settings are loaded without printing secrets.'
+ $processes += Start-Process 'cmd.exe' -ArgumentList "/c npm.cmd run dev -- --port $DashboardPort --strictPort" -WorkingDirectory $dashboardDir -WindowStyle Hidden -PassThru
+ Write-Host "AgentShield: http://127.0.0.1:$DashboardPort — Ctrl+C to stop. Uses SQLite unless DATABASE_URL is set. .env settings are loaded without printing secrets."
  while ($true) { Start-Sleep 1 }
 } finally { foreach ($process in $processes) { taskkill /PID $process.Id /T /F 2>$null | Out-Null } }
