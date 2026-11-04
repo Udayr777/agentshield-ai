@@ -2,7 +2,7 @@
 
 **Invoice intelligence with a code-enforced authority boundary.** Inspect synthetic invoices, challenge an agent with attacks, and understand the recorded outcome. Models advise; explicit human approval and deterministic controls govern simulations. **No real bank accounts or money movement.**
 
-[Open hosted demo](https://agentshield-ai-lgdd.onrender.com/) · [GitHub repository](https://github.com/Udayr777/agentshield-ai)
+[Watch the demo video on YouTube](https://www.youtube.com/watch?v=Sm9qTm1qLg8) · [Open hosted demo](https://agentshield-ai-lgdd.onrender.com/) · [GitHub repository](https://github.com/Udayr777/agentshield-ai)
 
 For a narrated demo, model attribution and practice troubleshooting, see the [rehearsal guide](REHEARSAL-GUIDE.md).
 
