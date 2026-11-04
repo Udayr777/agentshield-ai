@@ -51,3 +51,19 @@ class InvestigationTests(unittest.TestCase):
         self.assertEqual([t['action'] for t in run['trace']],['read_invoice'])
         self.assertFalse(run['partner_response_recorded'])
         self.assertEqual(model.call_count,1)
+
+    def test_invalid_json_after_partner_uses_labeled_saved_visual_fallback(self):
+        from meta_client import MetaError
+        def model(purpose,instruction,evidence,schema,**kwargs):
+            if purpose=='investigation_plan':
+                if 'review_open_weight' in evidence['available_tools']:
+                    return {'action':'review_open_weight','reason':'Review the evidence.'},{'model':'fixture'}
+                raise MetaError('invalid_model_json')
+            return self.model(purpose,instruction,evidence,schema,**kwargs)
+        with patch.object(agent,'complete_json',side_effect=model):run=self.start()
+        self.assertEqual(run['status'],'complete');self.assertTrue(run['partner_response_recorded'])
+        self.assertEqual([t['action'] for t in run['trace']],['read_invoice','review_open_weight','inspect_visual','finish'])
+        self.assertEqual(run['trace'][2]['planner']['provider'],'deterministic')
+        self.assertIn('invalid JSON',run['trace'][2]['reason'])
+        self.assertEqual(app.events(self.owner),[])
+        self.assertEqual(ws.get_invoice(self.invoice,self.owner,app.connect,False)['status'],'pending')
