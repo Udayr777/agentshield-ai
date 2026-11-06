@@ -4,8 +4,6 @@
 
 [Watch the demo video on YouTube](https://www.youtube.com/watch?v=Sm9qTm1qLg8) · [Project post on X](https://x.com/udayramesh007/status/2117922697703514224) · [Open hosted demo](https://agentshield-ai-lgdd.onrender.com/) · [GitHub repository](https://github.com/Udayr777/agentshield-ai)
 
-For a narrated demo, model attribution and practice troubleshooting, see the [rehearsal guide](REHEARSAL-GUIDE.md).
-
 ## First-time walkthrough
 
 1. Choose **Sign up**. Use an email you control if you want password recovery. New accounts start empty.
